@@ -1,17 +1,19 @@
 # HTML Visual Editor Pro
 
+> **下载安装包（点击前往）**：[Releases 下载页](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0)  
+> - Windows：[`HtmlEditorLauncher.exe`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher.exe)  
+> - macOS：[`HtmlEditorLauncher-macOS.zip`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher-macOS.zip)
+
 > English version: [README_EN.md](./README_EN.md)
 
-单文件可视化 HTML 编辑器。可在浏览器中直接打开使用，支持导入页面、拖拽编辑、样式调整与导出。
+本工具原始形态为 HTML 可视化编辑器；为保护源码，已封装为可执行程序（Windows `.exe` / macOS `.app`）对外分发。请通过上方链接下载安装包使用，不提供 HTML 源文件。
 
 ## 快速开始
 
-1. 用浏览器打开 `editor_en.html`
-2. 点击 **Import HTML File** 导入文件，或 **Import HTML Code** 粘贴完整 HTML
-3. 在 **Edit Mode** 下点击元素开始编辑
-4. 完成后点击顶部 **Export** 导出结果
-
-无需安装依赖，也无需启动服务。
+1. 打开 [Releases 下载页](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0)，下载对应系统的安装包
+2. Windows：双击 `HtmlEditorLauncher.exe`；macOS：解压 zip 后打开 `HtmlEditorLauncher.app`
+3. 在编辑器中点击 **Import HTML File** 导入文件，或 **Import HTML Code** 粘贴完整 HTML
+4. 在 **Edit Mode** 下点击元素开始编辑，完成后点击顶部 **Export** 导出结果
 
 ## 功能概览
 
@@ -106,15 +108,24 @@
 - 背景、边框、内外边距
 - 旋转、缩放
 
-## 文件结构
+## 文件说明
 
-```text
-html编辑器/
-├── editor_en.html   # 完整编辑器（HTML + CSS + JS）
-├── README.md        # 中文说明
-└── README_EN.md     # English documentation
-```
+| 文件 | 说明 |
+| --- | --- |
+| [README_CN.md](./README_CN.md) | 中文说明 |
+| [README_EN.md](./README_EN.md) | English documentation |
+| [HTML_Editor_Introduction.pdf](./HTML_Editor_Introduction.pdf) | 介绍文档 PDF |
+| [Releases](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0) | Windows / macOS 安装包下载 |
 
 ## 浏览器建议
 
 推荐使用较新的 Chrome、Edge、Safari 或 Firefox。建议在桌面宽度下使用；窄屏会切换为上下布局，侧栏拖拽调节会隐藏。
+
+### macOS 打开提示
+
+若提示无法打开，可在终端执行：
+
+```bash
+xattr -dr com.apple.quarantine ./HtmlEditorLauncher.app
+open ./HtmlEditorLauncher.app
+```

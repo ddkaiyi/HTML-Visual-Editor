@@ -1,17 +1,19 @@
 # HTML Visual Editor Pro
 
+> **Download the installer (click to open):** [Releases page](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0)  
+> - Windows: [`HtmlEditorLauncher.exe`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher.exe)  
+> - macOS: [`HtmlEditorLauncher-macOS.zip`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher-macOS.zip)
+
 > 中文版：[README_CN.md](./README_CN.md)
 
-A single-file visual HTML editor. Open it in a browser to import pages, edit by dragging, adjust styles, and export the result.
+This tool was originally built as an HTML visual editor. To protect the source code, it is packaged as executable apps (Windows `.exe` / macOS `.app`) for distribution. Please download the installer from the links above. The HTML source is not provided.
 
 ## Quick Start
 
-1. Open `editor_en.html` in a browser
-2. Click **Import HTML File**, or **Import HTML Code** to paste a full HTML document
-3. Switch to **Edit Mode** and click elements to start editing
-4. Click **Export** at the top when you are done
-
-No dependencies and no local server required.
+1. Open the [Releases page](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0) and download the package for your system
+2. Windows: double-click `HtmlEditorLauncher.exe`; macOS: unzip the zip, then open `HtmlEditorLauncher.app`
+3. In the editor, click **Import HTML File**, or **Import HTML Code** to paste a full HTML document
+4. Switch to **Edit Mode**, click elements to edit, then click **Export** at the top when done
 
 ## Features
 
@@ -105,15 +107,24 @@ After importing a file, click **Show Properties** to open the right panel. You c
 - Background, border, padding, and margin
 - Rotate and scale
 
-## File Structure
+## Files
 
-```text
-html编辑器/
-├── editor_en.html   # Full editor (HTML + CSS + JS)
-├── README_CN.md     # Chinese documentation
-└── README_EN.md     # English documentation
-```
+| File | Description |
+| --- | --- |
+| [README_CN.md](./README_CN.md) | Chinese documentation |
+| [README_EN.md](./README_EN.md) | English documentation |
+| [HTML_Editor_Introduction.pdf](./HTML_Editor_Introduction.pdf) | Introduction PDF |
+| [Releases](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0) | Windows / macOS installer downloads |
 
 ## Browser Support
 
 Use a recent Chrome, Edge, Safari, or Firefox. Desktop width is recommended; on narrow screens the layout stacks vertically and sidebar resizing is hidden.
+
+### macOS open tip
+
+If macOS blocks the app, run:
+
+```bash
+xattr -dr com.apple.quarantine ./HtmlEditorLauncher.app
+open ./HtmlEditorLauncher.app
+```
