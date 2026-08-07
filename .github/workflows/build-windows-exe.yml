@@ -1,0 +1,40 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "editor_en.html"
+      - "编辑器.html"
+      - "launch_editor.py"
+      - "build_exe.ps1"
+      - ".github/workflows/build-windows-exe.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync HTML and build EXE
+        shell: pwsh
+        run: |
+          Copy-Item "editor_en.html" "编辑器.html" -Force
+          python -m pip install --upgrade pip pyinstaller
+          python -m PyInstaller --noconfirm --clean --onefile --windowed `
+            --name HtmlEditorLauncher `
+            --add-data "编辑器.html;." `
+            launch_editor.py
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HtmlEditorLauncher
+          path: dist/HtmlEditorLauncher.exe
+          if-no-files-found: error

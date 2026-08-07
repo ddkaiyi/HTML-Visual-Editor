@@ -245,20 +245,28 @@
     }
 
     .sidebar-title {
-      font-size:13px; font-weight:700; color:#333;
-      border-left:4px solid #2649B2; padding-left:8px; margin-top:2px;
+      font-size: var(--panel-font-md);
+      font-weight: 700;
+      color: #333;
+      border-left: 4px solid #2649B2;
+      padding-left: 8px;
+      margin-top: 2px;
+      line-height: 1.35;
     }
 
     .editor-sidebar,
     .editor-style-panel {
       --panel-font-scale: 1;
-      --panel-font-xxs: calc(10px * var(--panel-font-scale));
-      --panel-font-xs: calc(11px * var(--panel-font-scale));
-      --panel-font-sm: calc(12px * var(--panel-font-scale));
-      --panel-font-md: calc(13px * var(--panel-font-scale));
-      --panel-pad-sm: calc(6px * var(--panel-font-scale));
-      --panel-pad-md: calc(8px * var(--panel-font-scale));
-      --panel-pad-lg: calc(10px * var(--panel-font-scale));
+      --panel-font-xs: 11px;
+      --panel-font-sm: 12px;
+      --panel-font-md: 13px;
+      --panel-pad-sm: 7px;
+      --panel-pad-md: 10px;
+      --panel-radius: 6px;
+      --panel-control-h: 34px;
+      font-size: var(--panel-font-sm);
+      line-height: 1.4;
+      color: #334155;
     }
 
     .editor-sidebar .sidebar-title,
@@ -272,8 +280,9 @@
     .editor-sidebar .action-btn,
     .editor-sidebar .mode-btn,
     .editor-sidebar .file-upload-btn,
+    .editor-sidebar .sync-item,
+    .editor-sidebar .panel-item,
     .editor-style-panel .sp-tip,
-    .editor-style-panel .sp-label,
     .editor-style-panel .text-help,
     .editor-style-panel .sp-row label,
     .editor-style-panel .sp-rst,
@@ -281,10 +290,22 @@
     .editor-style-panel .sp-v,
     .editor-style-panel .sp-cell label,
     .editor-style-panel .sp-textarea,
+    .editor-style-panel .sync-item,
     .editor-style-panel input,
     .editor-style-panel select,
-    .editor-style-panel button {
-      font-size: var(--panel-font-sm);
+    .editor-style-panel button,
+    .editor-style-panel .action-btn {
+      font-size: var(--panel-font-sm) !important;
+      line-height: 1.4;
+      box-sizing: border-box;
+    }
+
+    .editor-sidebar .sync-item small,
+    .editor-style-panel .sp-v,
+    .editor-style-panel .sp-cell label,
+    .editor-style-panel .text-help,
+    .editor-style-panel .sp-rst {
+      font-size: var(--panel-font-xs) !important;
     }
 
     .editor-sidebar .action-btn,
@@ -293,10 +314,12 @@
     .editor-style-panel .action-btn,
     .editor-style-panel .sp-rst,
     .editor-style-panel .sp-btn {
+      min-height: var(--panel-control-h);
       padding-top: var(--panel-pad-sm);
       padding-bottom: var(--panel-pad-sm);
       padding-left: var(--panel-pad-md);
       padding-right: var(--panel-pad-md);
+      border-radius: var(--panel-radius);
     }
 
     .editor-style-panel .sp-textarea,
@@ -304,10 +327,67 @@
     .editor-style-panel .sp-row input[type=text],
     .editor-style-panel .sp-row select,
     .editor-style-panel .sp-cell input {
+      min-height: var(--panel-control-h);
       padding-top: var(--panel-pad-sm);
       padding-bottom: var(--panel-pad-sm);
       padding-left: var(--panel-pad-md);
       padding-right: var(--panel-pad-md);
+      border-radius: var(--panel-radius);
+    }
+
+    .editor-sidebar .hint-box,
+    .editor-sidebar .tag-display,
+    .editor-sidebar .sel-count,
+    .editor-style-panel .text-help {
+      padding: var(--panel-pad-sm) var(--panel-pad-md);
+      border-radius: var(--panel-radius);
+    }
+
+    .editor-sidebar .tool-grid .action-btn,
+    .editor-sidebar .mini-grid .action-btn {
+      min-height: var(--panel-control-h);
+      padding: var(--panel-pad-sm) 6px;
+      font-size: var(--panel-font-sm) !important;
+    }
+
+    .editor-style-panel .sp-label {
+      font-size: var(--panel-font-xs) !important;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .editor-style-panel .sp-row {
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .editor-style-panel .sp-row label {
+      min-width: 72px;
+      flex-shrink: 0;
+    }
+
+    .editor-style-panel .sp-v {
+      min-width: 42px;
+    }
+
+    .editor-style-panel .sp-grid {
+      gap: 8px;
+    }
+
+    .editor-style-panel .sp-cell {
+      gap: 4px;
+    }
+
+    .editor-style-panel .sp-bd {
+      padding: 12px 14px;
+    }
+
+    .editor-sidebar {
+      gap: 10px;
+      padding: 14px;
     }
     .top-bar {
       min-height:46px; background:#fff; border-bottom:1px solid #e5e7eb;
@@ -613,7 +693,7 @@
     .file-upload-wrapper { position:relative; width:100%; }
     .file-upload-btn {
       display:block; width:100%; background:#2649B2; color:#fff; padding:10px 12px;
-      border-radius:6px; text-align:center; font-size:13px; cursor:pointer;
+      border-radius:6px; text-align:center; font-size:12px; cursor:pointer;
     }
     .file-upload-wrapper input[type="file"] {
       position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer;
@@ -621,7 +701,7 @@
 
     .action-btn {
       display:block; width:100%; padding:9px 10px; border:none; border-radius:6px;
-      cursor:pointer; font-size:13px; text-align:center;
+      cursor:pointer; font-size:12px; text-align:center;
     }
     .btn-green { background:#1a9e5c; color:#fff; }
     .btn-green:disabled { background:#cfcfcf; cursor:not-allowed; }
@@ -634,7 +714,7 @@
 
     .tag-display, .hint-box {
       background:#fafbfc; border:1px solid #e8edf3; border-radius:6px; padding:8px 10px;
-      font-size:12px; color:#555; line-height:1.5; word-break:break-all;
+      font-size:12px; color:#555; line-height:1.45; word-break:break-all;
     }
     .tag-display { background:#f0f4ff; border-color:#c5d0f0; color:#334155; }
 
@@ -644,6 +724,7 @@
     .mode-btn, .mini-btn {
       flex:1; padding:8px 10px; border-radius:6px; border:1px solid #d8deea;
       background:#f8faff; cursor:pointer; font-size:12px; color:#4a5568;
+      min-height: 34px;
     }
     .mode-btn.active, .mini-btn.active {
       background:#2649B2; border-color:#2649B2; color:#fff;
@@ -660,53 +741,53 @@
     .sp-hd {
       padding:12px 15px; font-size:13px; font-weight:700; color:#333; border-bottom:1px solid #eee;
     }
-    .sp-bd { flex:1; overflow:auto; padding:10px 13px; }
+    .sp-bd { flex:1; overflow:auto; padding:12px 14px; }
     .sp-tip { color:#ccc; font-size:12px; text-align:center; padding:40px 10px; }
-    .sp-section { margin-bottom:10px; }
-    .sp-label { font-size:10px; font-weight:700; color:#aaa; text-transform:uppercase; margin-bottom:5px; }
-    .sp-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
-    .sp-row label { font-size:12px; color:#555; min-width:50px; }
-    .sp-v { font-size:11px; color:#aaa; min-width:40px; text-align:right; }
+    .sp-section { margin-bottom:12px; }
+    .sp-label { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; }
+    .sp-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .sp-row label { font-size:12px; color:#555; min-width:72px; }
+    .sp-v { font-size:11px; color:#64748b; min-width:42px; text-align:right; }
 
     input[type=color] {
-      width:28px; height:24px; border:1px solid #ddd; border-radius:3px; padding:1px; cursor:pointer; flex-shrink:0;
+      width:28px; height:28px; border:1px solid #ddd; border-radius:4px; padding:1px; cursor:pointer; flex-shrink:0;
     }
     input[type=range] { flex:1; accent-color:#2649B2; }
 
     .sp-row input[type=number], .sp-row input[type=text], .sp-row select, .sp-textarea {
-      flex:1; padding:6px 8px; border:1px solid #e0e0e0; border-radius:4px; font-size:12px; min-width:0;
+      flex:1; padding:7px 10px; border:1px solid #e0e0e0; border-radius:6px; font-size:12px; min-width:0;
     }
     .sp-row input:focus, .sp-row select:focus, .sp-textarea:focus, .sp-cell input:focus {
       outline:none; border-color:#2649B2;
     }
-    .sp-btns { display:flex; gap:3px; flex:1; }
+    .sp-btns { display:flex; gap:6px; flex:1; }
     .sp-btn {
-      flex:1; padding:4px; border:1px solid #ddd; border-radius:3px; background:#fafafa; cursor:pointer; font-size:12px;
+      flex:1; padding:7px; border:1px solid #ddd; border-radius:6px; background:#fafafa; cursor:pointer; font-size:12px;
     }
     .sp-btn.on { background:#2649B2; color:#fff; border-color:#2649B2; }
-    .sp-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
-    .sp-cell { display:flex; flex-direction:column; gap:2px; }
-    .sp-cell label { font-size:10px; color:#999; }
+    .sp-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .sp-cell { display:flex; flex-direction:column; gap:4px; }
+    .sp-cell label { font-size:11px; color:#64748b; }
     .sp-cell input {
-      padding:4px 6px; border:1px solid #e0e0e0; border-radius:3px; font-size:12px; width:100%;
+      padding:7px 10px; border:1px solid #e0e0e0; border-radius:6px; font-size:12px; width:100%;
     }
     .sp-rst {
-      width:100%; padding:6px; border:1px dashed #ccc; border-radius:4px; background:#fafafa; cursor:pointer; font-size:11px; color:#999;
+      width:100%; padding:7px; border:1px dashed #ccc; border-radius:6px; background:#fafafa; cursor:pointer; font-size:11px; color:#64748b;
     }
     .drag-tip {
-      padding:1px 6px; border-radius:20px; font-size:10px; background:#fff3e0; color:#e65100; border:1px solid #ffcc80;
+      padding:2px 8px; border-radius:20px; font-size:11px; background:#fff3e0; color:#e65100; border:1px solid #ffcc80;
     }
 
     .text-help {
       font-size:11px; color:#666; line-height:1.5; background:#fafbfc;
-      border:1px solid #e8edf3; border-radius:6px; padding:8px;
+      border:1px solid #e8edf3; border-radius:6px; padding:8px 10px;
     }
     .text-help.ok { color:#1a7f37; background:#f1fbf4; border-color:#cdeed5; }
     .text-help.warn { color:#a15c00; background:#fff8eb; border-color:#f5d9a5; }
 
     .sel-count {
       font-size:12px; color:#2649B2; font-weight:700;
-      background:#eef4ff; border:1px solid #cfe0ff; border-radius:6px; padding:7px 8px;
+      background:#eef4ff; border:1px solid #cfe0ff; border-radius:6px; padding:8px 10px;
     }
     .tool-grid {
       display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;
@@ -721,7 +802,7 @@
       gap: 6px;
       max-height: 180px;
       overflow: auto;
-      padding: 2px;
+      padding: 6px;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       background: #fbfdff;
@@ -729,8 +810,8 @@
 
     .sync-item {
       border: 1px solid #dfe7f5;
-      border-radius: 8px;
-      padding: 7px 8px;
+      border-radius: 6px;
+      padding: 8px 10px;
       background: #ffffff;
       font-size: 12px;
       color: #334155;
@@ -1210,7 +1291,7 @@
             <li><span class="help-key">Ctrl/Cmd+Z</span> Undo，<span class="help-key">Ctrl/Cmd+Y</span> Redo。</li>
             <li><span class="help-key">Ctrl/Cmd+C</span> duplicate selected elements.</li>
             <li><span class="help-key">Ctrl/Cmd+D</span> delete selected elements.</li>
-            <li><span class="help-key">Ctrl/Cmd+Enter</span> apply text box content.</li>
+            <li><span class="help-key">Enter</span> apply text box content (<span class="help-key">Shift+Enter</span> for a new line).</li>
           </ol>
         </div>
 
@@ -1336,20 +1417,17 @@
     }
 
     function getPanelScaleFromWidth(widthPx) {
-      var minW = minPanelWidth;
-      var maxW = maxPanelWidth;
-      if (maxW <= minW) return 1;
-      var t = (widthPx - minW) / (maxW - minW);
-      var eased = 0.72 + (clamp(t, 0, 1) * 0.62);
-      return Math.round(eased * 1000) / 1000;
+      return 1;
     }
 
     function applyPanelTypographyScale(side, widthPx) {
       var targetId = side === "left" ? "left-sidebar" : "right-style-panel";
       var panel = gi(targetId);
       if (!panel) return;
-      var scale = getPanelScaleFromWidth(widthPx) * panelUiZoom;
-      panel.style.setProperty("--panel-font-scale", String(scale));
+      panel.style.setProperty("--panel-font-scale", "1");
+      panel.style.setProperty("--panel-font-xs", "11px");
+      panel.style.setProperty("--panel-font-sm", "12px");
+      panel.style.setProperty("--panel-font-md", "13px");
     }
 
     function applyPanelWidths() {
@@ -1383,7 +1461,7 @@
     }
 
     function syncPanelUiZoomToPreview() {
-      panelUiZoom = clamp(1 + ((previewScale - 1) * 0.35), 0.78, 1.35);
+      panelUiZoom = 1;
       applyPanelWidths();
     }
 
@@ -3528,7 +3606,7 @@
         syncEmpty: "Sync stack is empty. Select an element, then click \"Add to Sync Stack\".",
         syncType: "Type: ",
         textHelpEmpty: "Please select an editable text element.",
-        textHelpOk: "This element supports text editing. Double-click also works for quick editing.",
+        textHelpOk: "Press Enter to apply. Use Shift+Enter for a new line. You can also double-click text on the canvas.",
         textHelpWarn: "This element is not suitable for direct text editing. Please select a more specific text element.",
         imageHelpEmpty: "Please select an img element to edit.",
         imageHelpOk: "Current element is an image. You can edit the URL or replace it with a local image.",
@@ -3566,7 +3644,52 @@
         defaultFont: "Default",
         guide: "Editor Guide",
         guideSubtitle: "Follow the steps below to complete element selection, style editing, and page export faster.",
-        gotIt: "Got it"
+        gotIt: "Got it",
+        guideSections: [
+          {
+            title: "1. Basic Workflow",
+            items: [
+              "Import an HTML file first, or click \"Import HTML Code\".",
+              "Switch to \"Edit Mode\", then click page elements to start editing.",
+              "After editing, click \"Export\" at the top to save the result."
+            ]
+          },
+          {
+            title: "2. Selection & Navigation",
+            items: [
+              "<span class=\"help-key\">W</span> Move to parent node, <span class=\"help-key\">S</span> move to child node.",
+              "<span class=\"help-key\">A</span>/<span class=\"help-key\">D</span> Switch between sibling nodes.",
+              "<span class=\"help-key\">Esc</span> Also move to parent node.",
+              "<span class=\"help-key\">Tab</span>/<span class=\"help-key\">Shift+Tab</span> Move to previous/next sibling."
+            ]
+          },
+          {
+            title: "3. Editing",
+            items: [
+              "Drag elements to change position; drag the bottom-right handle to resize.",
+              "Use the right properties panel to adjust font, color, border, spacing, and transform.",
+              "Double-click a text element for quick text editing. In the text box, press <span class=\"help-key\">Enter</span> to apply, or <span class=\"help-key\">Shift+Enter</span> for a new line."
+            ]
+          },
+          {
+            title: "4. Shortcuts",
+            items: [
+              "<span class=\"help-key\">Ctrl/Cmd+Z</span> Undo, <span class=\"help-key\">Ctrl/Cmd+Y</span> Redo.",
+              "<span class=\"help-key\">Ctrl/Cmd+C</span> Duplicate selected elements.",
+              "<span class=\"help-key\">Ctrl/Cmd+D</span> Delete selected elements.",
+              "<span class=\"help-key\">Enter</span> Apply text box content (<span class=\"help-key\">Shift+Enter</span> for a new line)."
+            ]
+          },
+          {
+            title: "5. Sync",
+            items: [
+              "Select an element first, then click <span class=\"help-key\">Add to Sync Stack</span>.",
+              "Then select another element of the same type elsewhere on the page (for example, both img or both div) and add it.",
+              "When the sync stack has at least 2 elements, drag, arrow keys, and X/Y input will move them in sync. You can also align them left / right / top / bottom.",
+              "<span class=\"help-key\">Remove Current</span> removes a single element, and <span class=\"help-key\">Clear Sync Stack</span> resets the whole stack."
+            ]
+          }
+        ]
       },
       zh: {
         title: "HTML 编辑器",
@@ -3619,7 +3742,7 @@
         syncEmpty: "同步栈为空。先选中元素后点击“加入同步栈”。",
         syncType: "类型：",
         textHelpEmpty: "请选择可编辑文字元素。",
-        textHelpOk: "当前元素支持文本编辑。双击文本元素也可快速修改。",
+        textHelpOk: "按 Enter 即可应用修改；Shift+Enter 换行。也可在画布上双击文本快速修改。",
         textHelpWarn: "当前元素不适合直接编辑文本，请选择更具体的文字元素。",
         imageHelpEmpty: "请选择 img 元素进行编辑。",
         imageHelpOk: "当前为图片元素，可修改地址或替换本地图片。",
@@ -3657,9 +3780,73 @@
         defaultFont: "默认",
         guide: "编辑器使用说明",
         guideSubtitle: "按照以下步骤，可以更快完成元素选择、样式编辑和页面导出。",
-        gotIt: "我知道了"
+        gotIt: "我知道了",
+        guideSections: [
+          {
+            title: "1. 基本流程",
+            items: [
+              "先导入 HTML 文件，或点击「直接导入 HTML 代码」。",
+              "切换到「编辑模式」，点击页面元素开始编辑。",
+              "编辑完成后，点击顶部「导出」保存结果。"
+            ]
+          },
+          {
+            title: "2. 选择与导航",
+            items: [
+              "<span class=\"help-key\">W</span> 选中父节点，<span class=\"help-key\">S</span> 选中子节点。",
+              "<span class=\"help-key\">A</span>/<span class=\"help-key\">D</span> 切换兄弟节点。",
+              "<span class=\"help-key\">Esc</span> 也可选中父节点。",
+              "<span class=\"help-key\">Tab</span>/<span class=\"help-key\">Shift+Tab</span> 切换到上一个 / 下一个兄弟节点。"
+            ]
+          },
+          {
+            title: "3. 编辑操作",
+            items: [
+              "拖动元素改变位置；拖动右下角手柄调整尺寸。",
+              "使用右侧属性面板调整字体、颜色、边框、间距和变形。",
+              "双击文本可快速修改。属性栏文本框中按 <span class=\"help-key\">Enter</span> 应用，<span class=\"help-key\">Shift+Enter</span> 换行。"
+            ]
+          },
+          {
+            title: "4. 快捷键",
+            items: [
+              "<span class=\"help-key\">Ctrl/Cmd+Z</span> 撤销，<span class=\"help-key\">Ctrl/Cmd+Y</span> 重做。",
+              "<span class=\"help-key\">Ctrl/Cmd+C</span> 复制选中元素。",
+              "<span class=\"help-key\">Ctrl/Cmd+D</span> 删除选中元素。",
+              "<span class=\"help-key\">Enter</span> 应用文本框内容（<span class=\"help-key\">Shift+Enter</span> 换行）。"
+            ]
+          },
+          {
+            title: "5. 同步栈",
+            items: [
+              "先选中元素，再点击 <span class=\"help-key\">加入同步栈</span>。",
+              "再到页面其他位置选中同类型元素并加入（例如都是 img，或都是 div）。",
+              "同步栈中至少有 2 个元素后，拖拽、方向键和 X/Y 输入会联动移动；也可配合左右上下对齐统一排版。",
+              "<span class=\"help-key\">移除当前</span> 可移除单个元素，<span class=\"help-key\">清空同步栈</span> 清空整个栈。"
+            ]
+          }
+        ]
       }
     };
+
+    function updateHelpGuideLanguage(copy) {
+      var cards = document.querySelectorAll(".help-grid .help-card");
+      var sections = (copy && copy.guideSections) || [];
+      for (var i = 0; i < cards.length; i++) {
+        if (!sections[i]) break;
+        var h3 = cards[i].querySelector("h3");
+        var list = cards[i].querySelector(".help-list");
+        if (h3) h3.textContent = sections[i].title || "";
+        if (!list) continue;
+        var items = sections[i].items || [];
+        list.innerHTML = "";
+        for (var j = 0; j < items.length; j++) {
+          var li = document.createElement("li");
+          li.innerHTML = items[j];
+          list.appendChild(li);
+        }
+      }
+    }
 
     function setText(id, value) {
       var el = gi(id);
@@ -3802,6 +3989,7 @@
       var helpSubtitle = document.querySelector(".help-subtitle");
       if (helpTitle) helpTitle.textContent = copy.guide;
       if (helpSubtitle) helpSubtitle.textContent = copy.guideSubtitle;
+      updateHelpGuideLanguage(copy);
       setText("btn-help-close", copy.gotIt);
       var languageToggle = gi("language-toggle");
       if (languageToggle) languageToggle.setAttribute("aria-pressed", currentLanguage === "zh" ? "true" : "false");
@@ -3973,9 +4161,15 @@
     gi("btn-undo").addEventListener("click", undo);
     gi("btn-redo").addEventListener("click", redo);
 
-    gi("btn-apply-text").addEventListener("click", function() {
-      if (!selEl) { gi("top-bar").textContent = "Please select an element first."; return; }
-      if (!isTextLikeElement(selEl)) { gi("top-bar").textContent = "Current element is not suitable for direct text edits."; return; }
+    function applyTextFromPanel() {
+      if (!selEl) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return false;
+      }
+      if (!isTextLikeElement(selEl)) {
+        gi("top-bar").textContent = "Current element is not suitable for direct text edits.";
+        return false;
+      }
       saveHistory("applyText");
       applyEditableText(selEl, gi("sText").value);
       refreshTextEditor();
@@ -3983,10 +4177,19 @@
       updateCanvasHeightByContent();
       if (zoomMode === "fit") fitReportToViewport();
       gi("top-bar").textContent = "Text content applied.";
+      return true;
+    }
+
+    gi("btn-apply-text").addEventListener("click", function() {
+      applyTextFromPanel();
     });
 
     gi("sText").addEventListener("keydown", function(e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") gi("btn-apply-text").click();
+      if (e.key !== "Enter") return;
+      // Enter applies text; Shift+Enter keeps a newline in the textarea.
+      if (e.shiftKey) return;
+      e.preventDefault();
+      applyTextFromPanel();
     });
 
     gi("btn-apply-img").addEventListener("click", function() {
