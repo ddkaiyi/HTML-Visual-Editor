@@ -1,143 +1,105 @@
-# HTML 编辑器打包 EXE 方法
+# HTML 编辑器桌面端打包方法
 
-本文档记录将 HTML 编辑器打包为 Windows 可执行文件（.exe）的完整流程。
+将 HTML 编辑器打包为：
 
-> 当前主编辑器源文件为 `editor_en.html`。打包前会同步复制为 `编辑器.html`（与启动脚本文件名一致）。
+- Windows：`HtmlEditorLauncher.exe`
+- macOS：`HtmlEditorLauncher.app`（另附 zip）
 
-## 1. 前置条件
+> 主源文件为 `editor_en.html`。打包前会同步复制为 `编辑器.html`。
 
-- 操作系统: Windows
-- 已安装 Python（建议 3.10+）
-- 已安装 PyInstaller
+## 1. Windows EXE
 
-检查版本:
+### 前置条件
+
+- Windows
+- Python 3.10+
+- PyInstaller
 
 ```powershell
 python --version
-pyinstaller --version
-```
-
-如未安装 PyInstaller:
-
-```powershell
 pip install pyinstaller
 ```
 
-## 2. 准备启动脚本
-
-项目目录已包含 `launch_editor.py`，用于启动后自动打开本地 HTML。
-
-若需手动创建，可参考仓库中的 `launch_editor.py`。
-
-## 3. 执行打包（推荐一键脚本）
-
-在项目根目录双击或运行:
+### 一键打包
 
 ```powershell
 .\build_exe.bat
 ```
 
-或:
+或：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build_exe.ps1
 ```
 
-等价手动命令:
-
-```powershell
-Copy-Item .\editor_en.html .\编辑器.html -Force
-pyinstaller --noconfirm --clean --onefile --windowed --name HtmlEditorLauncher --add-data "编辑器.html;." launch_editor.py
-```
-
-参数说明:
-
-- `--onefile`: 生成单文件 EXE
-- `--windowed`: 不弹出控制台黑窗
-- `--add-data`: 把 HTML 一起打进 EXE
-- `--clean`: 清理缓存，避免旧资源残留
-
-## 4. 输出位置
-
-打包完成后 EXE 在:
+### 输出
 
 - `dist/HtmlEditorLauncher.exe`
 
-## 5. 快速验证
+## 2. macOS App
 
-```powershell
-.\dist\HtmlEditorLauncher.exe
+### 前置条件
+
+- macOS
+- Python 3.10+
+- PyInstaller
+
+```bash
+python3 --version
+python3 -m pip install pyinstaller
 ```
 
-可选验证文件时间和大小:
+### 一键打包
 
-```powershell
-$f = Get-Item .\dist\HtmlEditorLauncher.exe
-$f.LastWriteTime
-$f.Length
+```bash
+chmod +x ./build_mac.sh
+./build_mac.sh
 ```
 
-## 6. 用 GitHub Actions 云端打包（macOS 可用）
+### 输出
 
-若当前不在 Windows，可推送代码后到 GitHub Actions 生成 EXE：
+- `dist/HtmlEditorLauncher.app`
+- `dist/HtmlEditorLauncher-macOS.zip`（方便分发）
 
-1. 打开仓库 Actions 页面
-2. 选择 **Build Windows EXE**
-3. 点击 **Run workflow**
-4. 完成后下载 Artifact：`HtmlEditorLauncher.exe`
+打开方式：
 
-## 7. Logo 内嵌（推荐）
+```bash
+open ./dist/HtmlEditorLauncher.app
+```
 
-如果页面中有本地图片（如 logo），建议改成 base64 data URL，避免用户机器缺图。
+首次打开若提示无法验证开发者：右键 App → 打开 → 仍要打开。
 
-示例思路:
+## 3. GitHub Actions 云端同时打包
 
-1. 读取 PNG 二进制
-2. 转 base64
-3. 将 `<img src="...">` 替换为 `src="data:image/png;base64,..."`
-4. 再重新打包 EXE
+推送代码后，在仓库 Actions 中运行 **Build Desktop Apps**：
 
-这样发给用户时只要一个 EXE 即可，不依赖额外图片文件。
+1. 打开 [Actions](https://github.com/ddkaiyi/HTML-Visual-Editor/actions)
+2. 选择 **Build Desktop Apps** → **Run workflow**
+3. 下载两个 Artifact：
+   - `HtmlEditorLauncher-Windows` → 内含 `.exe`
+   - `HtmlEditorLauncher-macOS` → 内含 `.zip`（解压后得到 `.app`）
 
-## 8. 修改后必须重打包
+## 4. 修改后必须重打包
 
-只要 HTML 或资源有变更，都需要重新执行第 3 步命令，否则用户拿到的仍是旧内容。
+HTML 或启动脚本变更后，需重新执行对应系统的打包命令，或重新跑 GitHub Actions。
 
-## 9. 常见问题
+## 5. 常见问题
 
-### 问题 1: 用户打开后不是最新页面
+### 找不到 HTML
 
-原因: 用户运行的是旧 EXE。
-
-处理:
-
-- 重新打包
-- 给新文件加版本号（例如 `HtmlEditorLauncher_v2.exe`）
-- 让用户删除旧 EXE 后再运行
-
-### 问题 2: 打开后 logo 丢失
-
-原因: HTML 仍引用本地图片路径。
-
-处理:
-
-- 将图片改为 base64 内嵌
-- 重新打包
-
-### 问题 3: 提示找不到 HTML
-
-原因: `--add-data` 或启动脚本文件名不匹配。
-
-处理:
-
-- 检查 `--add-data "编辑器.html;."`
-- 检查 `launch_editor.py` 里 `html_name` 与真实文件名一致
 - 确认已从 `editor_en.html` 同步到 `编辑器.html`
+- Windows：`--add-data "编辑器.html;."`
+- macOS：`--add-data "编辑器.html:."`
 
-### 问题 4: EXE 打开后提示文件已删除
+### EXE / App 打开后不是最新内容
 
-one-file EXE 会先解压到 `_MEI...` 临时目录；启动器现会将内嵌的 `编辑器.html` 复制到稳定临时目录后再交给浏览器打开：
+重新打包，并建议用户替换旧文件。
 
-```text
-%TEMP%\HtmlEditorLauncher\编辑器.html
+### macOS 提示已损坏 / 无法打开
+
+通常是未签名导致。可执行：
+
+```bash
+xattr -dr com.apple.quarantine ./dist/HtmlEditorLauncher.app
+open ./dist/HtmlEditorLauncher.app
 ```

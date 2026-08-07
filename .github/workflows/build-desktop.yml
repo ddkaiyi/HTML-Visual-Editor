@@ -1,0 +1,73 @@
+name: Build Desktop Apps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "editor_en.html"
+      - "launch_editor.py"
+      - "build_exe.ps1"
+      - "build_mac.sh"
+      - ".github/workflows/build-desktop.yml"
+
+jobs:
+  windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync HTML and build EXE
+        shell: pwsh
+        run: |
+          Copy-Item "editor_en.html" "编辑器.html" -Force
+          python -m pip install --upgrade pip pyinstaller
+          python -m PyInstaller --noconfirm --clean --onefile --windowed `
+            --name HtmlEditorLauncher `
+            --add-data "编辑器.html;." `
+            launch_editor.py
+
+      - name: Upload Windows EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: HtmlEditorLauncher-Windows
+          path: dist/HtmlEditorLauncher.exe
+          if-no-files-found: error
+
+  macos:
+    name: Build macOS App
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync HTML and build App
+        shell: bash
+        run: |
+          cp -f editor_en.html "编辑器.html"
+          python -m pip install --upgrade pip pyinstaller
+          python -m PyInstaller --noconfirm --clean --windowed \
+            --name HtmlEditorLauncher \
+            --add-data "编辑器.html:." \
+            launch_editor.py
+          ditto -c -k --sequesterRsrc --keepParent \
+            dist/HtmlEditorLauncher.app \
+            dist/HtmlEditorLauncher-macOS.zip
+
+      - name: Upload macOS App Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: HtmlEditorLauncher-macOS
+          path: dist/HtmlEditorLauncher-macOS.zip
+          if-no-files-found: error

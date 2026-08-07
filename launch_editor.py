@@ -1,8 +1,11 @@
 import os
+import pathlib
 import shutil
 import sys
 import tempfile
 import webbrowser
+from urllib.parse import urljoin
+from urllib.request import pathname2url
 
 
 def get_base_dir() -> str:
@@ -31,7 +34,7 @@ def main() -> int:
     html_path = os.path.join(stable_dir, html_name)
     shutil.copy2(bundled_html_path, html_path)
 
-    file_url = "file:///" + html_path.replace("\\", "/")
+    file_url = urljoin("file:", pathname2url(str(pathlib.Path(html_path).resolve())))
     webbrowser.open_new(file_url)
     return 0
 
