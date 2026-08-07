@@ -1,11 +1,6 @@
-
-# Generated packaging copy of editor_en.html
-# PyInstaller
-*.py[cod]
-*.spec
-.DS_Store
-.Python
-__pycache__/
-build/
-dist/
-编辑器.html
+# Keep local source/dev files out of this package-only repository
+*
+!HtmlEditorLauncher.exe
+!HtmlEditorLauncher-macOS.zip
+!README.md
+!.gitignore
