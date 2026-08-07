@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML Visual Editor</title>
+  <meta name="description" content="HTML Visual Editor — packaged as EXE for source protection. Download and use directly." />
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #152033;
+      --muted: #5b677a;
+      --line: #d7e0ee;
+      --brand: #2649B2;
+      --brand-dark: #1d3a91;
+      --ok: #0f7a3a;
+      --ok-bg: #eaf8ef;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 420px at 10% -10%, rgba(38, 73, 178, .16), transparent 60%),
+        radial-gradient(700px 360px at 100% 0%, rgba(38, 73, 178, .10), transparent 55%),
+        var(--bg);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      width: min(860px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 64px;
+    }
+
+    .lang {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .lang button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .lang button.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+
+    .hero {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 36px 32px;
+      box-shadow: 0 10px 30px rgba(21, 32, 51, .06);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef3ff;
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.2;
+      letter-spacing: -.02em;
+      margin-bottom: 12px;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 620px;
+      margin-bottom: 22px;
+    }
+
+    .note {
+      background: var(--ok-bg);
+      border: 1px solid #c7e8d2;
+      color: var(--ok);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--brand-dark); }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .btn-secondary:hover { background: #f7f9fc; }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: #f8faff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .card h2 {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .card p, .card ol {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card ol {
+      padding-left: 18px;
+      display: grid;
+      gap: 4px;
+    }
+
+    footer {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    footer a { color: var(--brand); }
+
+    [data-lang-panel] { display: none; }
+    [data-lang-panel].active { display: block; }
+
+    @media (max-width: 720px) {
+      .hero { padding: 28px 20px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" class="active" data-set-lang="zh">中文</button>
+      <button type="button" data-set-lang="en">EN</button>
+    </div>
+
+    <section class="hero">
+      <div data-lang-panel="zh" class="active">
+        <div class="eyebrow">Windows 桌面版</div>
+        <h1>HTML Visual Editor</h1>
+        <p class="lead">可视化 HTML 编辑工具。导入页面后可拖拽、对齐、改样式并导出结果。</p>
+        <div class="note">
+          原始文档是 HTML 编辑器；为保护源码，现已封装为 <strong>HtmlEditorLauncher.exe</strong> 对外分发，不提供 HTML 源文件。
+        </div>
+        <div class="actions">
+          <a class="btn btn-primary" href="./HtmlEditorLauncher.exe" download>
+            下载 HtmlEditorLauncher.exe
+          </a>
+          <a class="btn btn-secondary" href="./README_CN.md">使用说明</a>
+          <a class="btn btn-secondary" href="./HTML_Editor_Introduction.pdf">介绍 PDF</a>
+        </div>
+        <p class="hint">下载后双击即可使用，无需安装。</p>
+
+        <div class="grid">
+          <div class="card">
+            <h2>为什么是 EXE？</h2>
+            <p>产品逻辑原本写在 HTML 中。为避免源码被直接复制和改写，发布时封装成可执行文件，只保留使用入口。</p>
+          </div>
+          <div class="card">
+            <h2>快速开始</h2>
+            <ol>
+              <li>下载并双击运行 EXE</li>
+              <li>导入 HTML 文件或粘贴代码</li>
+              <li>进入 Edit Mode 编辑元素</li>
+              <li>完成后点击 Export 导出</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div data-lang-panel="en">
+        <div class="eyebrow">Windows Desktop</div>
+        <h1>HTML Visual Editor</h1>
+        <p class="lead">A visual HTML editing tool. Import a page, drag and style elements, then export the result.</p>
+        <div class="note">
+          The original project was an HTML editor. To protect the source code, it is packaged as <strong>HtmlEditorLauncher.exe</strong>. The HTML source is not provided.
+        </div>
+        <div class="actions">
+          <a class="btn btn-primary" href="./HtmlEditorLauncher.exe" download>
+            Download HtmlEditorLauncher.exe
+          </a>
+          <a class="btn btn-secondary" href="./README_EN.md">User Guide</a>
+          <a class="btn btn-secondary" href="./HTML_Editor_Introduction.pdf">Intro PDF</a>
+        </div>
+        <p class="hint">Double-click after download. No install required.</p>
+
+        <div class="grid">
+          <div class="card">
+            <h2>Why EXE?</h2>
+            <p>The product was originally implemented as HTML. Packaging it as an executable keeps the usable app while protecting the source.</p>
+          </div>
+          <div class="card">
+            <h2>Quick Start</h2>
+            <ol>
+              <li>Download and run the EXE</li>
+              <li>Import an HTML file or paste code</li>
+              <li>Use Edit Mode to edit elements</li>
+              <li>Click Export when finished</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span data-lang-panel="zh" class="active">仓库：</span>
+      <span data-lang-panel="en">Repository: </span>
+      <a href="https://github.com/ddkaiyi/HTML-Visual-Editor">ddkaiyi/HTML-Visual-Editor</a>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var buttons = document.querySelectorAll("[data-set-lang]");
+      var panels = document.querySelectorAll("[data-lang-panel]");
+
+      function setLang(lang) {
+        document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+        buttons.forEach(function (btn) {
+          btn.classList.toggle("active", btn.getAttribute("data-set-lang") === lang);
+        });
+        panels.forEach(function (panel) {
+          panel.classList.toggle("active", panel.getAttribute("data-lang-panel") === lang);
+        });
+        try { localStorage.setItem("html-editor-landing-lang", lang); } catch (e) {}
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          setLang(btn.getAttribute("data-set-lang"));
+        });
+      });
+
+      var saved = "zh";
+      try { saved = localStorage.getItem("html-editor-landing-lang") || "zh"; } catch (e) {}
+      setLang(saved === "en" ? "en" : "zh");
+    })();
+  </script>
+</body>
+</html>

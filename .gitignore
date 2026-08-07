@@ -1,7 +1,9 @@
 *
+!index.html
 !README.md
 !README_CN.md
 !README_EN.md
 !HTML_Editor_Introduction.pdf
 !HtmlEditorLauncher.exe
 !.gitignore
+!.nojekyll
