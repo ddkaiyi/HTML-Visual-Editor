@@ -1,6 +1,6 @@
 # HTML Visual Editor Pro
 
-> 中文版：[README.md](./README.md)
+> 中文版：[README_CN.md](./README_CN.md)
 
 A single-file visual HTML editor. Open it in a browser to import pages, edit by dragging, adjust styles, and export the result.
 
