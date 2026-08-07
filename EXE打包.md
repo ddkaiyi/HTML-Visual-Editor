@@ -2,6 +2,8 @@
 
 本文档记录将 HTML 编辑器打包为 Windows 可执行文件（.exe）的完整流程。
 
+> 当前主编辑器源文件为 `editor_en.html`。打包前会同步复制为 `编辑器.html`（与启动脚本文件名一致）。
+
 ## 1. 前置条件
 
 - 操作系统: Windows
@@ -23,50 +25,28 @@ pip install pyinstaller
 
 ## 2. 准备启动脚本
 
-在项目目录创建 `launch_editor.py`，用于启动后自动打开本地 HTML。
+项目目录已包含 `launch_editor.py`，用于启动后自动打开本地 HTML。
 
-```python
-import os
-import shutil
-import sys
-import tempfile
-import webbrowser
+若需手动创建，可参考仓库中的 `launch_editor.py`。
 
+## 3. 执行打包（推荐一键脚本）
 
-def get_base_dir() -> str:
-    if getattr(sys, "frozen", False):
-        return getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
-    return os.path.dirname(os.path.abspath(__file__))
-
-
-def main() -> int:
-    base_dir = get_base_dir()
-    html_name = "编辑器.html"
-    bundled_html_path = os.path.join(base_dir, html_name)
-
-    if not os.path.exists(bundled_html_path):
-        print(f"Missing file: {html_name}")
-        return 1
-
-    stable_dir = os.path.join(tempfile.gettempdir(), "HtmlEditorLauncher")
-    os.makedirs(stable_dir, exist_ok=True)
-    html_path = os.path.join(stable_dir, html_name)
-    shutil.copy2(bundled_html_path, html_path)
-
-    file_url = "file:///" + html_path.replace("\\", "/")
-    webbrowser.open_new(file_url)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-```
-
-## 3. 执行打包
-
-在项目根目录运行:
+在项目根目录双击或运行:
 
 ```powershell
+.\build_exe.bat
+```
+
+或:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build_exe.ps1
+```
+
+等价手动命令:
+
+```powershell
+Copy-Item .\editor_en.html .\编辑器.html -Force
 pyinstaller --noconfirm --clean --onefile --windowed --name HtmlEditorLauncher --add-data "编辑器.html;." launch_editor.py
 ```
 
@@ -97,7 +77,16 @@ $f.LastWriteTime
 $f.Length
 ```
 
-## 6. Logo 内嵌（推荐）
+## 6. 用 GitHub Actions 云端打包（macOS 可用）
+
+若当前不在 Windows，可推送代码后到 GitHub Actions 生成 EXE：
+
+1. 打开仓库 Actions 页面
+2. 选择 **Build Windows EXE**
+3. 点击 **Run workflow**
+4. 完成后下载 Artifact：`HtmlEditorLauncher.exe`
+
+## 7. Logo 内嵌（推荐）
 
 如果页面中有本地图片（如 logo），建议改成 base64 data URL，避免用户机器缺图。
 
@@ -110,11 +99,11 @@ $f.Length
 
 这样发给用户时只要一个 EXE 即可，不依赖额外图片文件。
 
-## 7. 修改后必须重打包
+## 8. 修改后必须重打包
 
 只要 HTML 或资源有变更，都需要重新执行第 3 步命令，否则用户拿到的仍是旧内容。
 
-## 8. 常见问题
+## 9. 常见问题
 
 ### 问题 1: 用户打开后不是最新页面
 
@@ -143,6 +132,7 @@ $f.Length
 
 - 检查 `--add-data "编辑器.html;."`
 - 检查 `launch_editor.py` 里 `html_name` 与真实文件名一致
+- 确认已从 `editor_en.html` 同步到 `编辑器.html`
 
 ### 问题 4: EXE 打开后提示文件已删除
 
@@ -150,3 +140,4 @@ one-file EXE 会先解压到 `_MEI...` 临时目录；启动器现会将内嵌�
 
 ```text
 %TEMP%\HtmlEditorLauncher\编辑器.html
+```
