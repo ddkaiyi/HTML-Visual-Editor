@@ -1,17 +1,16 @@
 # HTML Visual Editor Pro
 
-> **下载安装包（点击前往）**：[Releases 下载页](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0)  
-> - Windows：[`HtmlEditorLauncher.exe`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher.exe)  
-> - macOS：[`HtmlEditorLauncher-macOS.zip`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher-macOS.zip)
+> **下载使用（点击下载）**：[HtmlEditorLauncher.exe](https://github.com/ddkaiyi/HTML-Visual-Editor/blob/main/HtmlEditorLauncher.exe)  
+> 打开后点击页面上的 **Download** / **下载** 即可保存到本地。
 
 > English version: [README_EN.md](./README_EN.md)
 
-本工具原始形态为 HTML 可视化编辑器；为保护源码，已封装为可执行程序（Windows `.exe` / macOS `.app`）对外分发。请通过上方链接下载安装包使用，不提供 HTML 源文件。
+本工具原始形态是 **HTML 可视化编辑器**。为保护源码，已封装为 Windows 可执行文件（`.exe`）对外分发，**不提供 HTML 源文件**。你只需要下载 `HtmlEditorLauncher.exe` 即可使用。
 
 ## 快速开始
 
-1. 打开 [Releases 下载页](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0)，下载对应系统的安装包
-2. Windows：双击 `HtmlEditorLauncher.exe`；macOS：解压 zip 后打开 `HtmlEditorLauncher.app`
+1. 点击上方链接打开 [`HtmlEditorLauncher.exe`](https://github.com/ddkaiyi/HTML-Visual-Editor/blob/main/HtmlEditorLauncher.exe)
+2. 下载后双击运行（无需安装）
 3. 在编辑器中点击 **Import HTML File** 导入文件，或 **Import HTML Code** 粘贴完整 HTML
 4. 在 **Edit Mode** 下点击元素开始编辑，完成后点击顶部 **Export** 导出结果
 
@@ -51,7 +50,7 @@
 | `Ctrl/Cmd + Y` | 重做 |
 | `Ctrl/Cmd + C` | 复制选中元素 |
 | `Ctrl/Cmd + D` | 删除选中元素 |
-| `Ctrl/Cmd + Enter` | 应用文本框内容 |
+| `Enter` | 应用文本框内容（`Shift+Enter` 换行） |
 | `Alt + ↑` | 选择父节点（属性栏按钮） |
 
 按住 `Ctrl/Cmd` + 滚轮可在画布上缩放。
@@ -112,20 +111,11 @@
 
 | 文件 | 说明 |
 | --- | --- |
+| [HtmlEditorLauncher.exe](https://github.com/ddkaiyi/HTML-Visual-Editor/blob/main/HtmlEditorLauncher.exe) | Windows 安装包（请下载此文件使用） |
 | [README_CN.md](./README_CN.md) | 中文说明 |
 | [README_EN.md](./README_EN.md) | English documentation |
 | [HTML_Editor_Introduction.pdf](./HTML_Editor_Introduction.pdf) | 介绍文档 PDF |
-| [Releases](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0) | Windows / macOS 安装包下载 |
 
 ## 浏览器建议
 
 推荐使用较新的 Chrome、Edge、Safari 或 Firefox。建议在桌面宽度下使用；窄屏会切换为上下布局，侧栏拖拽调节会隐藏。
-
-### macOS 打开提示
-
-若提示无法打开，可在终端执行：
-
-```bash
-xattr -dr com.apple.quarantine ./HtmlEditorLauncher.app
-open ./HtmlEditorLauncher.app
-```
