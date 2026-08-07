@@ -1,6 +1,5 @@
-# Keep local source/dev files out of this package-only repository
 *
-!HtmlEditorLauncher.exe
-!HtmlEditorLauncher-macOS.zip
-!README.md
+!README_CN.md
+!README_EN.md
+!HTML_Editor_Introduction.pdf
 !.gitignore
