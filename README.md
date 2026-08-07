@@ -1,8 +1,6 @@
 # HTML Visual Editor Pro
 
-> **Download the installer (click to open):** [Releases page](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/tag/v1.0.0)  
-> - Windows: [`HtmlEditorLauncher.exe`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher.exe)  
-> - macOS: [`HtmlEditorLauncher-macOS.zip`](https://github.com/ddkaiyi/HTML-Visual-Editor/releases/download/v1.0.0/HtmlEditorLauncher-macOS.zip)
+> **Download the installer (click to open):** [Releases page](https://github.com/ddkaiyi/HTML-Visual-Editor/blob/main/HtmlEditorLauncher.exe)  
 
 > 中文版：[README_CN.md](./README_CN.md)
 
