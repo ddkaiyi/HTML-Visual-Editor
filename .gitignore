@@ -3,6 +3,7 @@
 # PyInstaller
 *.py[cod]
 *.spec
+.DS_Store
 .Python
 __pycache__/
 build/
