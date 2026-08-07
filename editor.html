@@ -1,0 +1,4526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML Visual Editor Pro (Stable Live)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body.editor-host-body { font-family: sans-serif; background:#f0f2f5; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+
+    .editor-page-header {
+      min-height: 56px;
+      background: #fff;
+      border-bottom: 1px solid #dfe4ed;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 18px;
+    }
+
+    .editor-page-header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: .2px;
+    }
+
+    .editor-header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .language-toggle {
+      width: 62px;
+      height: 36px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #111827;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 0;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .language-toggle:hover {
+      background-color: #f8fafc;
+      border-color: #64748b;
+    }
+
+    .language-toggle:focus-visible {
+      outline: none;
+      border-color: #2649B2;
+      box-shadow: 0 0 0 3px rgba(38, 73, 178, .18);
+    }
+
+    .language-toggle img {
+      display: none;
+    }
+
+    .language-toggle-label {
+      flex: 1 1 50%;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .language-toggle-label + .language-toggle-label {
+      border-left: 1px solid #cbd5e1;
+    }
+
+    .language-toggle-label.active {
+      background: #111827;
+      color: #fff;
+    }
+
+    .editor-mode-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .editor-mode-badge.edit {
+      color: #0f4a25;
+      background: #e8f9ef;
+      border-color: #a9e7c0;
+    }
+
+    .editor-mode-badge.live {
+      color: #0b3d91;
+      background: #e8f0ff;
+      border-color: #9db7f3;
+      box-shadow: 0 0 0 2px rgba(38, 73, 178, .12);
+    }
+
+    .editor-header-btn {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #d8deea;
+      background: #f8faff;
+      color: #4a5568;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .editor-header-btn.primary {
+      background: #2649B2;
+      border-color: #2649B2;
+      color: #fff;
+    }
+
+    .editor-header-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .editor-main-shell {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .editor-main-shell.resizing,
+    .editor-main-shell.resizing * {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+
+    .editor-sidebar {
+      width: 320px; background:#fff; border-right:1px solid #e5e7eb;
+      display:flex; flex-direction:column; gap:12px; padding:16px; overflow:auto;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .editor-workspace { flex:1; display:flex; flex-direction:column; min-width:0; background:#eef1f6; position: relative; }
+    .editor-style-panel {
+      width: 320px; background:#fff; border-left:1px solid #e5e7eb;
+      display:flex; flex-direction:column; overflow:hidden;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .panel-resizer {
+      width: 10px;
+      flex: 0 0 10px;
+      position: relative;
+      background: #eef2f8;
+      border-left: 1px solid #e0e6f1;
+      border-right: 1px solid #e0e6f1;
+      cursor: col-resize;
+      user-select: none;
+      touch-action: none;
+      z-index: 1000;
+      transition: background .15s ease;
+    }
+
+    .panel-resizer.is-hidden {
+      display: none !important;
+    }
+
+    .panel-resizer::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 3px;
+      height: 40px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: #b8c5da;
+      box-shadow: -3px 0 0 #d0d9e8, 3px 0 0 #d0d9e8;
+      pointer-events: none;
+    }
+
+    .panel-resizer::after {
+      content: "";
+      position: absolute;
+      inset: 0 -10px;
+      cursor: col-resize;
+    }
+
+    .panel-resizer:hover,
+    .panel-resizer.active {
+      background: #dfe8ff;
+    }
+
+    .panel-resizer:hover::before,
+    .panel-resizer.active::before {
+      background: #2649B2;
+      box-shadow: -3px 0 0 #93a9e0, 3px 0 0 #93a9e0;
+    }
+
+    .panel-resize-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      cursor: col-resize;
+      z-index: 10000;
+      touch-action: none;
+    }
+
+    .panel-resize-overlay.active {
+      display: block;
+    }
+
+    .panel-width-badge {
+      position: fixed;
+      z-index: 10001;
+      display: none;
+      pointer-events: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #111827;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, .22);
+      transform: translate(-50%, -120%);
+      white-space: nowrap;
+    }
+
+    .panel-width-badge.active {
+      display: block;
+    }
+
+    .sidebar-title {
+      font-size: var(--panel-font-md);
+      font-weight: 700;
+      color: #333;
+      border-left: 4px solid #2649B2;
+      padding-left: 8px;
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    .editor-sidebar,
+    .editor-style-panel {
+      --panel-font-scale: 1;
+      --panel-font-xs: 11px;
+      --panel-font-sm: 12px;
+      --panel-font-md: 13px;
+      --panel-pad-sm: 7px;
+      --panel-pad-md: 10px;
+      --panel-radius: 6px;
+      --panel-control-h: 34px;
+      font-size: var(--panel-font-sm);
+      line-height: 1.4;
+      color: #334155;
+    }
+
+    .editor-sidebar .sidebar-title,
+    .editor-style-panel .sp-hd {
+      font-size: var(--panel-font-md);
+    }
+
+    .editor-sidebar .hint-box,
+    .editor-sidebar .tag-display,
+    .editor-sidebar .sel-count,
+    .editor-sidebar .action-btn,
+    .editor-sidebar .mode-btn,
+    .editor-sidebar .file-upload-btn,
+    .editor-sidebar .sync-item,
+    .editor-sidebar .panel-item,
+    .editor-style-panel .sp-tip,
+    .editor-style-panel .text-help,
+    .editor-style-panel .sp-row label,
+    .editor-style-panel .sp-rst,
+    .editor-style-panel .sp-btn,
+    .editor-style-panel .sp-v,
+    .editor-style-panel .sp-cell label,
+    .editor-style-panel .sp-textarea,
+    .editor-style-panel .sync-item,
+    .editor-style-panel input,
+    .editor-style-panel select,
+    .editor-style-panel button,
+    .editor-style-panel .action-btn {
+      font-size: var(--panel-font-sm) !important;
+      line-height: 1.4;
+      box-sizing: border-box;
+    }
+
+    .editor-sidebar .sync-item small,
+    .editor-style-panel .sp-v,
+    .editor-style-panel .sp-cell label,
+    .editor-style-panel .text-help,
+    .editor-style-panel .sp-rst {
+      font-size: var(--panel-font-xs) !important;
+    }
+
+    .editor-sidebar .action-btn,
+    .editor-sidebar .mode-btn,
+    .editor-sidebar .file-upload-btn,
+    .editor-style-panel .action-btn,
+    .editor-style-panel .sp-rst,
+    .editor-style-panel .sp-btn {
+      min-height: var(--panel-control-h);
+      padding-top: var(--panel-pad-sm);
+      padding-bottom: var(--panel-pad-sm);
+      padding-left: var(--panel-pad-md);
+      padding-right: var(--panel-pad-md);
+      border-radius: var(--panel-radius);
+    }
+
+    .editor-style-panel .sp-textarea,
+    .editor-style-panel .sp-row input[type=number],
+    .editor-style-panel .sp-row input[type=text],
+    .editor-style-panel .sp-row select,
+    .editor-style-panel .sp-cell input {
+      min-height: var(--panel-control-h);
+      padding-top: var(--panel-pad-sm);
+      padding-bottom: var(--panel-pad-sm);
+      padding-left: var(--panel-pad-md);
+      padding-right: var(--panel-pad-md);
+      border-radius: var(--panel-radius);
+    }
+
+    .editor-sidebar .hint-box,
+    .editor-sidebar .tag-display,
+    .editor-sidebar .sel-count,
+    .editor-style-panel .text-help {
+      padding: var(--panel-pad-sm) var(--panel-pad-md);
+      border-radius: var(--panel-radius);
+    }
+
+    .editor-sidebar .tool-grid .action-btn,
+    .editor-sidebar .mini-grid .action-btn {
+      min-height: var(--panel-control-h);
+      padding: var(--panel-pad-sm) 6px;
+      font-size: var(--panel-font-sm) !important;
+    }
+
+    .editor-style-panel .sp-label {
+      font-size: var(--panel-font-xs) !important;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .editor-style-panel .sp-row {
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .editor-style-panel .sp-row label {
+      min-width: 72px;
+      flex-shrink: 0;
+    }
+
+    .editor-style-panel .sp-v {
+      min-width: 42px;
+    }
+
+    .editor-style-panel .sp-grid {
+      gap: 8px;
+    }
+
+    .editor-style-panel .sp-cell {
+      gap: 4px;
+    }
+
+    .editor-style-panel .sp-bd {
+      padding: 12px 14px;
+    }
+
+    .editor-sidebar {
+      gap: 10px;
+      padding: 14px;
+    }
+    .top-bar {
+      min-height:46px; background:#fff; border-bottom:1px solid #e5e7eb;
+      display:flex; align-items:center; padding:0 16px; font-size:12px; color:#555; line-height:1.4;
+    }
+
+    .top-bar { display: none; }
+
+    .report-toolbar {
+      min-height: 48px;
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 10px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: nowrap;
+      min-width: max-content;
+      flex: 1 1 auto;
+    }
+
+    .toolbar-block {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      flex-wrap: nowrap;
+    }
+
+    .toolbar-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .zoom-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+
+    .zoom-btn {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #d8deea;
+      background: #f8faff;
+      color: #4a5568;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .zoom-btn.active {
+      background: #2649B2;
+      color: #fff;
+      border-color: #2649B2;
+    }
+
+    .zoom-status {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .panel-toggle-btn {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #d8deea;
+      background: #f8faff;
+      color: #4a5568;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .panel-toggle-btn.active {
+      background: #2649B2;
+      color: #fff;
+      border-color: #2649B2;
+    }
+
+    .report-stage-wrap {
+      flex: 1;
+      overflow: auto;
+      background: #e9edf5;
+      padding: 24px;
+      position: relative;
+    }
+
+    .stage-error {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(680px, calc(100% - 40px));
+      min-height: 72px;
+      border-radius: 10px;
+      border: 1px solid #f2b8b5;
+      background: #fff1f0;
+      color: #9f1d1d;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.5;
+      z-index: 150;
+      box-shadow: 0 8px 30px rgba(159, 29, 29, .12);
+    }
+
+    .code-import-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .code-import-dialog {
+      width: min(900px, 100%);
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, .25);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .code-import-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .code-import-note {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .code-import-textarea {
+      width: 100%;
+      min-height: 320px;
+      resize: vertical;
+      border: 1px solid #d8deea;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 12px;
+      font-family: Consolas, "Courier New", monospace;
+      line-height: 1.5;
+      color: #111827;
+      background: #fbfdff;
+    }
+
+    .code-import-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .help-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .help-dialog {
+      width: min(860px, 100%);
+      max-height: min(780px, calc(100vh - 40px));
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, .25);
+      padding: 14px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .help-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #111827;
+      letter-spacing: .2px;
+    }
+
+    .help-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+
+    .help-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .help-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+      padding: 10px 12px;
+    }
+
+    .help-card h3 {
+      font-size: 12px;
+      font-weight: 800;
+      color: #2649B2;
+      margin-bottom: 8px;
+      letter-spacing: .2px;
+    }
+
+    .help-list {
+      list-style: decimal;
+      margin: 0;
+      padding-left: 18px;
+      color: #374151;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .help-list li + li {
+      margin-top: 2px;
+    }
+
+    .help-key {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 6px;
+      border: 1px solid #d8deea;
+      background: #f3f6fb;
+      color: #1f2937;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .help-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .report-stage {
+      position: relative;
+      width: 1920px;
+      height: 945px;
+      margin: 0 auto;
+      transform-origin: top center;
+      transition: transform .15s ease;
+    }
+
+    .preview-iframe {
+      width: 1920px;
+      height: 945px;
+      margin: 0;
+      border: none;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+      display: block;
+    }
+
+    .file-upload-wrapper { position:relative; width:100%; }
+    .file-upload-btn {
+      display:block; width:100%; background:#2649B2; color:#fff; padding:10px 12px;
+      border-radius:6px; text-align:center; font-size:12px; cursor:pointer;
+    }
+    .file-upload-wrapper input[type="file"] {
+      position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer;
+    }
+
+    .action-btn {
+      display:block; width:100%; padding:9px 10px; border:none; border-radius:6px;
+      cursor:pointer; font-size:12px; text-align:center;
+    }
+    .btn-green { background:#1a9e5c; color:#fff; }
+    .btn-green:disabled { background:#cfcfcf; cursor:not-allowed; }
+    .btn-outline { background:#fff; color:#c00; border:1px solid #c00; }
+    .btn-blue { background:#2649B2; color:#fff; }
+    .btn-gray { background:#f7f8fa; color:#333; border:1px solid #d9dfe8; }
+    .btn-warn { background:#fff8eb; color:#a15c00; border:1px solid #f5d9a5; }
+
+    .sp-hr { height:1px; background:#f0f0f0; margin:4px 0; }
+
+    .tag-display, .hint-box {
+      background:#fafbfc; border:1px solid #e8edf3; border-radius:6px; padding:8px 10px;
+      font-size:12px; color:#555; line-height:1.45; word-break:break-all;
+    }
+    .tag-display { background:#f0f4ff; border-color:#c5d0f0; color:#334155; }
+
+    .mode-wrap, .mini-grid, .tool-grid, .pair-row {
+      display:flex; gap:8px;
+    }
+    .mode-btn, .mini-btn {
+      flex:1; padding:8px 10px; border-radius:6px; border:1px solid #d8deea;
+      background:#f8faff; cursor:pointer; font-size:12px; color:#4a5568;
+      min-height: 34px;
+    }
+    .mode-btn.active, .mini-btn.active {
+      background:#2649B2; border-color:#2649B2; color:#fff;
+    }
+
+    .panel-list { display:flex; flex-direction:column; gap:6px; }
+    .panel-item {
+      border:1px solid #e5e7eb; background:#fff; padding:8px 10px; border-radius:6px;
+      cursor:pointer; font-size:12px; color:#333; text-align:left;
+    }
+    .panel-item:hover { background:#f7faff; border-color:#bfd0ff; }
+    .panel-item small { display:block; color:#888; margin-top:2px; word-break:break-all; }
+
+    .sp-hd {
+      padding:12px 15px; font-size:13px; font-weight:700; color:#333; border-bottom:1px solid #eee;
+    }
+    .sp-bd { flex:1; overflow:auto; padding:12px 14px; }
+    .sp-tip { color:#ccc; font-size:12px; text-align:center; padding:40px 10px; }
+    .sp-section { margin-bottom:12px; }
+    .sp-label { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; }
+    .sp-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .sp-row label { font-size:12px; color:#555; min-width:72px; }
+    .sp-v { font-size:11px; color:#64748b; min-width:42px; text-align:right; }
+
+    input[type=color] {
+      width:28px; height:28px; border:1px solid #ddd; border-radius:4px; padding:1px; cursor:pointer; flex-shrink:0;
+    }
+    input[type=range] { flex:1; accent-color:#2649B2; }
+
+    .sp-row input[type=number], .sp-row input[type=text], .sp-row select, .sp-textarea {
+      flex:1; padding:7px 10px; border:1px solid #e0e0e0; border-radius:6px; font-size:12px; min-width:0;
+    }
+    .sp-row input:focus, .sp-row select:focus, .sp-textarea:focus, .sp-cell input:focus {
+      outline:none; border-color:#2649B2;
+    }
+    .sp-btns { display:flex; gap:6px; flex:1; }
+    .sp-btn {
+      flex:1; padding:7px; border:1px solid #ddd; border-radius:6px; background:#fafafa; cursor:pointer; font-size:12px;
+    }
+    .sp-btn.on { background:#2649B2; color:#fff; border-color:#2649B2; }
+    .sp-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .sp-cell { display:flex; flex-direction:column; gap:4px; }
+    .sp-cell label { font-size:11px; color:#64748b; }
+    .sp-cell input {
+      padding:7px 10px; border:1px solid #e0e0e0; border-radius:6px; font-size:12px; width:100%;
+    }
+    .sp-rst {
+      width:100%; padding:7px; border:1px dashed #ccc; border-radius:6px; background:#fafafa; cursor:pointer; font-size:11px; color:#64748b;
+    }
+    .drag-tip {
+      padding:2px 8px; border-radius:20px; font-size:11px; background:#fff3e0; color:#e65100; border:1px solid #ffcc80;
+    }
+
+    .text-help {
+      font-size:11px; color:#666; line-height:1.5; background:#fafbfc;
+      border:1px solid #e8edf3; border-radius:6px; padding:8px 10px;
+    }
+    .text-help.ok { color:#1a7f37; background:#f1fbf4; border-color:#cdeed5; }
+    .text-help.warn { color:#a15c00; background:#fff8eb; border-color:#f5d9a5; }
+
+    .sel-count {
+      font-size:12px; color:#2649B2; font-weight:700;
+      background:#eef4ff; border:1px solid #cfe0ff; border-radius:6px; padding:8px 10px;
+    }
+    .tool-grid {
+      display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;
+    }
+    .tool-grid .action-btn, .mini-grid .action-btn {
+      padding:8px 6px; font-size:12px;
+    }
+
+    .sync-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow: auto;
+      padding: 6px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fbfdff;
+    }
+
+    .sync-item {
+      border: 1px solid #dfe7f5;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #ffffff;
+      font-size: 12px;
+      color: #334155;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    .sync-item.active {
+      border-color: #2649B2;
+      background: #eef4ff;
+      box-shadow: inset 0 0 0 1px rgba(38, 73, 178, .15);
+    }
+
+    .sync-item small {
+      display: block;
+      margin-top: 2px;
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    @media (max-width: 1200px) {
+      .editor-sidebar, .editor-style-panel {
+        width: 280px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body.editor-host-body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+      }
+
+      .editor-page-header {
+        min-height: 64px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+      }
+
+      .editor-page-header h1 {
+        font-size: 20px;
+      }
+
+      .editor-header-actions {
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .editor-main-shell {
+        flex-direction: column;
+        overflow: auto;
+      }
+
+      .editor-workspace {
+        order: 1;
+        min-height: 65vh;
+      }
+
+      .editor-sidebar {
+        order: 2;
+        width: 100%;
+        border-right: none;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .panel-resizer {
+        display: none;
+      }
+
+      .editor-style-panel {
+        order: 3;
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #e5e7eb;
+        min-height: 320px;
+      }
+
+      .top-bar, .report-toolbar {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .report-toolbar {
+        flex-wrap: nowrap;
+      }
+
+      .toolbar-left {
+        width: auto;
+        min-width: max-content;
+      }
+
+      .toolbar-block {
+        width: auto;
+      }
+
+      .report-stage-wrap {
+        padding: 14px;
+      }
+
+      .help-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .help-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+    }
+  </style>
+</head>
+<body class="editor-host-body">
+
+  <header class="editor-page-header">
+    <h1>HTML Editor</h1>
+    <div class="editor-header-actions">
+      <span class="editor-mode-badge edit" id="header-mode-text" title="Click to switch mode">Edit Mode: drag, align, edit text, and adjust styles without triggering original page interactions.</span>
+      <button id="language-toggle" class="language-toggle" type="button" title="切换中英文界面 / Switch interface language" aria-label="切换中英文界面 / Switch interface language">
+        <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjxET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj48c3ZnIHQ9IjE3ODYwMTEwNzQ4MjciIGNsYXNzPSJpY29uIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0IiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgcC1pZD0iNTQyNyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNOTYwIDEwMjEuNTM2aC0xMjhhMzEuODA4IDMxLjgwOCAwIDEgMSAwLTYzLjYxNmgyMC44OTZsLTM4LjgxNi0xMjYuODQ4aC0xNTYuMTZsLTM4LjgxNiAxMjYuODQ4SDY0MGEzMS44MDggMzEuODA4IDAgMSAxIDAtNjMuNjE2aC0xMjhhMzEuODA4IDMxLjgwOCAwIDEgMSAwLTYzLjYxNmg0MC40OGwxMjEuNi0zOTIuMjU2YTMyIDMyIDAgMCAxIDI5LjgyNC0yMC4yODhoNjRhMzIgMzIgMCAwIDEgMjkuODI0IDIwLjI4OGwxMjEuNiAzOTIuMjU2SDk2MGEzMS44MDggMzEuODA4IDAgMSAxIDAgNjMuNjE2eiBtLTIxMy44ODgtNDEyLjU0NGgtMjAuMjI0bC00OC41MTIgMTU4LjQ2NGgxMTcuMjQ4eiBNODY0IDIyNS45ODRhNjQgNjQgMCAwIDAtNjQtNjRoLTE5MnYtNjRoMTkydjY0YTEyOC4zODQgMTI4LjM4NCAwIDAgMSAxMjggMTI4djE5MmgtNjR2LTE5MnptLTQ0OCAxNjBIMjg4djE2MEgyMjR2LTE2MEg5NmE2NC4xOTIgNjQuMTkyIDAgMCAxLTY0LTY0di0xMjhhNjQuMTkyIDY0LjE5MiAwIDAgMSA2NC02NGgxMjh2LTEyOGg2NHYxMjhoMTI4YTY0LjE5MiA2NC4xOTIgMCAwIDEgNjQgNjR2MTI4YTY0LjE5MiA2NC4xOTIgMCAwIDEtNjQgNjR6IG0tMTkyLTE5Mkg5NnYxMjhoMTI4di0xMjh6IG0xOTIgMEgyODh2MTI4aDEyOHYtMTI4eiBtLTI1NiA2MDhhNjQgNjQgMCAwIDAgNjQgNjRoMTkydjY0SDIyNGExMjguMzg0IDEyOC4zODQgMCAwIDEtMTI4LTEyOHYtMTkyaDY0djE5MnoiIHAtaWQ9IjU0MjgiIGZpbGw9IiMyYzJjMmMiPjwvcGF0aD48L3N2Zz4=" alt="" aria-hidden="true">
+        <span class="language-toggle-label" data-language="zh" aria-hidden="true">中</span>
+        <span class="language-toggle-label active" data-language="en" aria-hidden="true">EN</span>
+      </button>
+      <button class="editor-header-btn primary" id="btn-header-export" type="button" disabled>Export</button>
+      <button class="panel-toggle-btn" id="btn-toggle-style-panel" type="button" disabled>Show Properties</button>
+      <button class="panel-toggle-btn" id="btn-header-help" type="button">Help</button>
+    </div>
+  </header>
+
+  <div class="editor-main-shell">
+
+  <div class="editor-sidebar" id="left-sidebar">
+    <div class="sidebar-title">File Actions</div>
+    <div class="file-upload-wrapper">
+      <span class="file-upload-btn">Import HTML File</span>
+      <input type="file" id="html-file-loader" accept=".html,.htm">
+    </div>
+    <button class="action-btn btn-blue" id="btn-import-code" type="button">Import HTML Code</button>
+    <button class="action-btn btn-outline" id="btn-reset" style="display:none">Reset Page</button>
+
+    <div class="sp-hr"></div>
+
+    <div class="sidebar-title">Mode</div>
+    <div class="mode-wrap">
+      <button id="btn-mode-edit" class="mode-btn active" type="button">Edit Mode</button>
+      <button id="btn-mode-live" class="mode-btn" type="button">Live View</button>
+    </div>
+    <div class="hint-box" id="mode-hint">
+      Edit Mode: drag, align, edit text, and adjust styles without triggering original page interactions.
+    </div>
+
+    <div class="sp-hr"></div>
+
+    <div class="sidebar-title">Multi-Select & Align</div>
+    <div class="sel-count" id="sel-count">Selected: 0</div>
+    <div class="mini-grid">
+      <button class="action-btn btn-gray" id="btn-clear-selection" type="button">Clear Selection</button>
+      <button class="action-btn btn-gray" id="btn-group-move-toggle" type="button">Group Move: Off</button>
+    </div>
+    <div class="tool-grid">
+      <button class="action-btn btn-gray" id="btn-align-left" type="button">Align Left</button>
+      <button class="action-btn btn-gray" id="btn-align-hcenter" type="button">Align H-Center</button>
+      <button class="action-btn btn-gray" id="btn-align-right" type="button">Align Right</button>
+      <button class="action-btn btn-gray" id="btn-align-top" type="button">Align Top</button>
+      <button class="action-btn btn-gray" id="btn-align-vcenter" type="button">Align V-Center</button>
+      <button class="action-btn btn-gray" id="btn-align-bottom" type="button">Align Bottom</button>
+    </div>
+
+    <div class="sp-hr"></div>
+
+    <div class="sidebar-title">Sync</div>
+    <div class="mini-grid">
+      <button class="action-btn btn-gray" id="btn-sync-add" type="button">Add to Sync Stack</button>
+      <button class="action-btn btn-gray" id="btn-sync-remove" type="button">Remove Current</button>
+    </div>
+    <button class="action-btn btn-gray" id="btn-sync-clear" type="button">Clear Sync Stack</button>
+    <div class="sync-list" id="sync-list">
+      <div class="hint-box">Sync stack is empty. Select an element, then click "Add to Sync Stack".</div>
+    </div>
+
+    <div class="sp-hr"></div>
+
+    <div class="sidebar-title">Undo / Redo</div>
+    <div class="mini-grid">
+      <button class="action-btn btn-gray" id="btn-undo" type="button">Undo</button>
+      <button class="action-btn btn-gray" id="btn-redo" type="button">Redo</button>
+    </div>
+
+    <div class="sp-hr"></div>
+
+    <div class="sidebar-title">Selected Element</div>
+    <div class="tag-display" id="tag-display"><span style="color:#ccc">None</span></div>
+  </div>
+
+  <div class="panel-resizer" id="left-resizer" title="Drag to resize left panel (double-click to reset)" role="separator" aria-orientation="vertical" aria-label="Resize left panel"></div>
+
+  <div class="editor-workspace">
+    <div class="top-bar" id="top-bar">Please import an HTML file</div>
+
+    <div class="report-toolbar" id="report-toolbar">
+      <div class="toolbar-left">
+        <div class="toolbar-block">
+          <span class="toolbar-label">Zoom:</span>
+          <div class="zoom-group">
+            <button class="zoom-btn" id="zoom-25" type="button">25%</button>
+            <button class="zoom-btn" id="zoom-50" type="button">50%</button>
+            <button class="zoom-btn" id="zoom-75" type="button">75%</button>
+            <button class="zoom-btn" id="zoom-100" type="button">100%</button>
+            <button class="zoom-btn active" id="zoom-fit" type="button">Fit</button>
+          </div>
+        </div>
+        <div class="toolbar-block">
+          <span class="toolbar-label">Canvas:</span>
+          <div class="zoom-group">
+            <button class="zoom-btn active" id="canvas-default" type="button">Default</button>
+            <button class="zoom-btn" id="canvas-16-9" type="button">16:9</button>
+            <button class="zoom-btn" id="canvas-4-3" type="button">4:3</button>
+          </div>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <div class="zoom-status" id="zoom-status" title="Double-click to input size, e.g. 1920x1080">Zoom: Fit</div>
+      </div>
+    </div>
+
+    <div class="report-stage-wrap" id="report-stage-wrap">
+      <div class="stage-error" id="stage-error"></div>
+      <div class="report-stage" id="report-stage">
+        <iframe id="preview-viewport" class="preview-iframe"
+          srcdoc="<html><head><meta charset='UTF-8'></head><body style='font-family:sans-serif;padding:60px;text-align:center;color:#aaa'><div style='font-size:28px;color:#2649B2;font-weight:700;margin-bottom:12px'>HTML Visual Editor Pro</div><p>Supports multi-select alignment, text editing, image replacement, duplicate/delete, and undo/redo</p></body></html>">
+        </iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-resizer is-hidden" id="right-resizer" title="Drag to resize right panel (double-click to reset)" role="separator" aria-orientation="vertical" aria-label="Resize right panel"></div>
+
+  <div class="editor-style-panel" id="right-style-panel" style="display:none">
+    <div class="sp-hd">Properties Panel</div>
+    <div class="sp-bd">
+      <div class="sp-tip" id="spTip">Click an element to start editing</div>
+      <div id="spMain" style="display:none">
+
+        <div class="sp-section">
+          <div class="sp-label">Text Content</div>
+          <textarea id="sText" class="sp-textarea" rows="5" placeholder="Editable text content appears here"></textarea>
+          <div style="height:6px"></div>
+          <button class="action-btn btn-blue" id="btn-apply-text" type="button">Apply Text</button>
+          <div style="height:6px"></div>
+          <div id="text-help" class="text-help">Please select an editable text element.</div>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label">Image</div>
+          <div class="sp-row">
+            <label>Image URL</label>
+            <input type="text" id="sImgSrc" placeholder="Select an img element to edit src">
+          </div>
+          <div class="mini-grid">
+            <button class="action-btn btn-blue" id="btn-apply-img" type="button">Apply Image URL</button>
+            <button class="action-btn btn-gray" id="btn-pick-img" type="button">Replace with Local Image</button>
+          </div>
+          <input type="file" id="img-file-picker" accept="image/*" style="display:none">
+          <div style="height:6px"></div>
+          <div id="img-help" class="text-help">Please select an img element to edit.</div>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label">Node Actions</div>
+          <button class="action-btn btn-blue" id="btn-select-parent" type="button" style="margin-bottom:6px">Select Parent Node (Alt+Up)</button>
+          <div class="mini-grid">
+            <button class="action-btn btn-gray" id="btn-duplicate-node" type="button">Duplicate Element</button>
+            <button class="action-btn btn-warn" id="btn-delete-node" type="button">Delete Element</button>
+          </div>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label" style="display:flex;justify-content:space-between">
+            <span>Position</span><span class="drag-tip">Draggable</span>
+          </div>
+          <div class="sp-grid" style="margin-bottom:5px">
+            <div class="sp-cell"><label>X(px)</label><input type="number" id="sTx" value="0"></div>
+            <div class="sp-cell"><label>Y(px)</label><input type="number" id="sTy" value="0"></div>
+          </div>
+          <button class="sp-rst" id="sPosRst" type="button">Reset Position</button>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label" style="display:flex;justify-content:space-between">
+            <span>Size</span><span class="drag-tip">Bottom-right corner draggable</span>
+          </div>
+          <div class="sp-grid" style="margin-bottom:5px">
+            <div class="sp-cell"><label>Width</label><input type="number" id="sW" value="0"></div>
+            <div class="sp-cell"><label>Height</label><input type="number" id="sH" value="0"></div>
+          </div>
+          <button class="sp-rst" id="sSizeRst" type="button">Restore Auto Size</button>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label">Text Style</div>
+          <div class="sp-row">
+            <label>Font</label>
+            <select id="sFont">
+              <option value="">Default</option>
+              <option value="Microsoft YaHei,sans-serif">Microsoft YaHei</option>
+              <option value="PingFang SC,sans-serif">PingFang SC</option>
+              <option value="Arial,sans-serif">Arial</option>
+              <option value="Georgia,serif">Georgia</option>
+            </select>
+          </div>
+          <div class="sp-row">
+            <label>Font Size</label>
+            <input type="range" id="sFsr" min="8" max="96" value="16">
+            <input type="number" id="sFsn" value="16" style="width:56px;flex:none">
+          </div>
+          <div class="sp-row">
+            <label>Color</label>
+            <input type="color" id="sColor" value="#333333">
+            <span id="sColorV" class="sp-v">#333333</span>
+          </div>
+          <div class="sp-row">
+            <label>Style</label>
+            <div class="sp-btns">
+              <button class="sp-btn" id="sBold" type="button"><b>B</b></button>
+              <button class="sp-btn" id="sItalic" type="button"><i>I</i></button>
+              <button class="sp-btn" id="sUnder" type="button"><u>U</u></button>
+              <button class="sp-btn" id="sStrike" type="button"><s>S</s></button>
+            </div>
+          </div>
+          <div class="sp-row">
+            <label>Line Height</label>
+            <input type="range" id="sLh" min="1" max="3.5" step="0.1" value="1.5">
+            <span id="sLhV" class="sp-v">1.5</span>
+          </div>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label">Background</div>
+          <div class="sp-row">
+            <label>Color</label>
+            <input type="color" id="sBg" value="#ffffff">
+            <span id="sBgV" class="sp-v">#ffffff</span>
+          </div>
+          <div class="sp-row">
+            <label>Opacity</label>
+            <input type="range" id="sOp" min="0" max="1" step="0.05" value="1">
+            <span id="sOpV" class="sp-v">100%</span>
+          </div>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label">Border</div>
+          <div class="sp-row">
+            <label>Radius</label>
+            <input type="range" id="sBr" min="0" max="80" value="0">
+            <span id="sBrV" class="sp-v">0px</span>
+          </div>
+          <div class="sp-row">
+            <label>Thickness</label>
+            <input type="range" id="sBw" min="0" max="12" value="0">
+            <span id="sBwV" class="sp-v">0px</span>
+          </div>
+          <div class="sp-row">
+            <label>Color</label>
+            <input type="color" id="sBc" value="#cccccc">
+            <select id="sBs">
+              <option value="solid">Solid</option>
+              <option value="dashed">Dashed</option>
+              <option value="dotted">Dotted</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label">Spacing (px)</div>
+          <div class="sp-grid">
+            <div class="sp-cell"><label>Pad Top</label><input type="number" id="sPt" value="0"></div>
+            <div class="sp-cell"><label>Pad Bottom</label><input type="number" id="sPb" value="0"></div>
+            <div class="sp-cell"><label>Pad Left</label><input type="number" id="sPl" value="0"></div>
+            <div class="sp-cell"><label>Pad Right</label><input type="number" id="sPr" value="0"></div>
+            <div class="sp-cell"><label>Margin Top</label><input type="number" id="sMt" value="0"></div>
+            <div class="sp-cell"><label>Margin Bottom</label><input type="number" id="sMb" value="0"></div>
+          </div>
+        </div>
+
+        <div class="sp-hr"></div>
+
+        <div class="sp-section">
+          <div class="sp-label">Transform</div>
+          <div class="sp-row">
+            <label>Rotate</label>
+            <input type="range" id="sRot" min="-180" max="180" value="0">
+            <span id="sRotV" class="sp-v">0</span>
+          </div>
+          <div class="sp-row">
+            <label>Scale</label>
+            <input type="range" id="sSc" min="0.1" max="3" step="0.05" value="1">
+            <span id="sScV" class="sp-v">1.00</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-resize-overlay" id="panel-resize-overlay" aria-hidden="true"></div>
+  <div class="panel-width-badge" id="panel-width-badge" aria-hidden="true"></div>
+
+  <div class="code-import-modal" id="code-import-modal">
+    <div class="code-import-dialog">
+      <div class="code-import-title">Import HTML Code</div>
+      <div class="code-import-note">Please paste a complete HTML document (including html and body tags).</div>
+      <textarea id="code-import-text" class="code-import-textarea" placeholder="Paste HTML code here..."></textarea>
+      <div class="code-import-actions">
+        <button class="panel-toggle-btn" id="btn-code-import-cancel" type="button">Cancel</button>
+        <button class="panel-toggle-btn active" id="btn-code-import-apply" type="button">Import Code</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-modal" id="help-modal">
+    <div class="help-dialog">
+      <div class="help-head">
+        <div>
+          <div class="help-title">Editor Guide</div>
+          <div class="help-subtitle">Follow the steps below to complete element selection, style editing, and page export faster.</div>
+        </div>
+      </div>
+
+      <div class="help-grid">
+        <div class="help-card">
+          <h3>1. Basic Workflow</h3>
+          <ol class="help-list">
+            <li>Import an HTML file first, or click "Import HTML Code".</li>
+            <li>Switch to "Edit Mode", then click page elements to start editing.</li>
+            <li>After editing, click "Export" at the top to save the result.</li>
+          </ol>
+        </div>
+
+        <div class="help-card">
+          <h3>2. Selection & Navigation</h3>
+          <ol class="help-list">
+            <li><span class="help-key">W</span> Move to parent node, <span class="help-key">S</span> move to child node.</li>
+            <li><span class="help-key">A</span>/<span class="help-key">D</span> Switch between sibling nodes.</li>
+            <li><span class="help-key">Esc</span> Also move to parent node.</li>
+            <li><span class="help-key">Tab</span>/<span class="help-key">Shift+Tab</span> Move to previous/next sibling.</li>
+          </ol>
+        </div>
+
+        <div class="help-card">
+          <h3>3. Editing</h3>
+          <ol class="help-list">
+            <li>Drag elements to change position; drag the bottom-right handle to resize.</li>
+            <li>Use the right properties panel to adjust font, color, border, spacing, and transform.</li>
+            <li>Double-click a text element for quick text editing.</li>
+          </ol>
+        </div>
+
+        <div class="help-card">
+          <h3>4. Shortcuts</h3>
+          <ol class="help-list">
+            <li><span class="help-key">Ctrl/Cmd+Z</span> Undo，<span class="help-key">Ctrl/Cmd+Y</span> Redo。</li>
+            <li><span class="help-key">Ctrl/Cmd+C</span> duplicate selected elements.</li>
+            <li><span class="help-key">Ctrl/Cmd+D</span> delete selected elements.</li>
+            <li><span class="help-key">Enter</span> apply text box content (<span class="help-key">Shift+Enter</span> for a new line).</li>
+          </ol>
+        </div>
+
+        <div class="help-card">
+          <h3>5. Sync</h3>
+          <ol class="help-list">
+            <li>Select an element first, then click <span class="help-key">Add to Sync Stack</span>。</li>
+            <li>Then select another element of the same type (for example, both img or both div) and add it.</li>
+            <li>When the sync stack has at least 2 elements, drag, arrow keys, and X/Y input will move them in sync.</li>
+            <li><span class="help-key">Remove Current</span> removes a single element, and <span class="help-key">Clear Sync Stack</span> resets the whole stack.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="help-actions">
+        <button class="panel-toggle-btn active" id="btn-help-close" type="button">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <script>
+    var fileInput = document.getElementById("html-file-loader");
+    var iframe = document.getElementById("preview-viewport");
+    var imgPicker = document.getElementById("img-file-picker");
+
+    var selEl = null;
+    var hovEl = null;
+    var selectedEls = [];
+    var dragging = false;
+    var groupMoveEnabled = false;
+    var didDrag = false;
+    var resizing = false;
+    var didResize = false;
+    var resizeHandleEl = null;
+    var dx0 = 0;
+    var dy0 = 0;
+    var tx0 = 0;
+    var ty0 = 0;
+    var rw0 = 0;
+    var rh0 = 0;
+    var resizeDir = "se";
+    var dragSnapshot = [];
+    var dragSyncPrevDx = 0;
+    var dragSyncPrevDy = 0;
+    var noFill = false;
+
+    var currentFileName = "edited.html";
+    var originalHtmlText = "";
+    var currentMode = "edit"; // 记录当前的运行状态
+    var editorHandlersBound = false;
+
+    var lastSnapshot = "";
+    var redoSnapshot = "";
+    var historyLock = false;
+    var suppressNextLoadHistory = false;
+    var historyApplying = false;
+    var shortcutLock = false;
+    var pendingViewState = null;
+    var pendingViewReplaySeq = 0;
+    var syncStack = [];
+    var syncTagName = "";
+
+    var canvasWidth = 1920;
+    var canvasHeight = 945;
+    var defaultCanvasWidth = 1920;
+    var defaultCanvasHeight = 945;
+    var canvasSizeLocked = false;
+    var previewScale = 1;
+    var zoomMode = "fit";
+    var stylePanelVisible = false;
+    var hasImportedFile = false;
+    var pageTitleText = "HTML Editor";
+
+    var leftPanelWidth = 320;
+    var rightPanelWidth = 320;
+    var minPanelWidth = 180;
+    var maxPanelWidth = 720;
+    var defaultPanelWidth = 320;
+    var panelResizeState = null;
+    var panelUiZoom = 1;
+    var PANEL_WIDTH_STORAGE_KEY = "html-editor-panel-widths-v1";
+    var PANEL_RESIZER_WIDTH = 10;
+
+    function gi(id) { return document.getElementById(id); }
+    function getDoc() { return iframe.contentDocument || iframe.contentWindow.document; }
+    function getWin() { return iframe.contentWindow; }
+
+    function getN(el, k) { return parseFloat(el.getAttribute(k)) || 0; }
+
+    function clamp(v, minV, maxV) {
+      return Math.max(minV, Math.min(maxV, v));
+    }
+
+    function loadStoredPanelWidths() {
+      try {
+        var raw = localStorage.getItem(PANEL_WIDTH_STORAGE_KEY);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (data && typeof data.left === "number") {
+          leftPanelWidth = clamp(Math.round(data.left), minPanelWidth, maxPanelWidth);
+        }
+        if (data && typeof data.right === "number") {
+          rightPanelWidth = clamp(Math.round(data.right), minPanelWidth, maxPanelWidth);
+        }
+      } catch (e) {}
+    }
+
+    function savePanelWidths() {
+      try {
+        localStorage.setItem(PANEL_WIDTH_STORAGE_KEY, JSON.stringify({
+          left: leftPanelWidth,
+          right: rightPanelWidth
+        }));
+      } catch (e) {}
+    }
+
+    function setRightResizerVisible(visible) {
+      var rightResizer = gi("right-resizer");
+      if (!rightResizer) return;
+      rightResizer.classList.toggle("is-hidden", !visible);
+    }
+
+    function getPanelScaleFromWidth(widthPx) {
+      return 1;
+    }
+
+    function applyPanelTypographyScale(side, widthPx) {
+      var targetId = side === "left" ? "left-sidebar" : "right-style-panel";
+      var panel = gi(targetId);
+      if (!panel) return;
+      panel.style.setProperty("--panel-font-scale", "1");
+      panel.style.setProperty("--panel-font-xs", "11px");
+      panel.style.setProperty("--panel-font-sm", "12px");
+      panel.style.setProperty("--panel-font-md", "13px");
+    }
+
+    function applyPanelWidths() {
+      var left = gi("left-sidebar");
+      var right = gi("right-style-panel");
+      if (left) {
+        left.style.setProperty("width", leftPanelWidth + "px", "important");
+        left.style.setProperty("min-width", leftPanelWidth + "px", "important");
+        left.style.setProperty("max-width", leftPanelWidth + "px", "important");
+        left.style.setProperty("flex-basis", leftPanelWidth + "px", "important");
+        applyPanelTypographyScale("left", leftPanelWidth);
+      }
+      if (right) {
+        right.style.setProperty("width", rightPanelWidth + "px", "important");
+        right.style.setProperty("min-width", rightPanelWidth + "px", "important");
+        right.style.setProperty("max-width", rightPanelWidth + "px", "important");
+        right.style.setProperty("flex-basis", rightPanelWidth + "px", "important");
+        applyPanelTypographyScale("right", rightPanelWidth);
+      }
+    }
+
+    function applyPanelWidth(side) {
+      var panel = gi(side === "left" ? "left-sidebar" : "right-style-panel");
+      var width = side === "left" ? leftPanelWidth : rightPanelWidth;
+      if (!panel) return;
+      panel.style.setProperty("width", width + "px", "important");
+      panel.style.setProperty("min-width", width + "px", "important");
+      panel.style.setProperty("max-width", width + "px", "important");
+      panel.style.setProperty("flex-basis", width + "px", "important");
+      applyPanelTypographyScale(side, width);
+    }
+
+    function syncPanelUiZoomToPreview() {
+      panelUiZoom = 1;
+      applyPanelWidths();
+    }
+
+    function getCurrentRightPanelLayoutWidth() {
+      if (stylePanelVisible) return rightPanelWidth + PANEL_RESIZER_WIDTH;
+      return 0;
+    }
+
+    function getShellUsableWidth() {
+      var shell = document.querySelector(".editor-main-shell");
+      if (!shell) return 0;
+      return shell.clientWidth || 0;
+    }
+
+    function getAvailablePanelMaxWidth() {
+      var shellWidth = getShellUsableWidth();
+      if (!shellWidth) return maxPanelWidth;
+      var reservedCenter = 360;
+      var leftResizer = PANEL_RESIZER_WIDTH;
+      var rightNow = getCurrentRightPanelLayoutWidth();
+      var computed = shellWidth - reservedCenter - leftResizer - rightNow;
+      return clamp(computed, minPanelWidth, maxPanelWidth);
+    }
+
+    function getAvailableRightPanelMaxWidth() {
+      var shellWidth = getShellUsableWidth();
+      if (!shellWidth) return maxPanelWidth;
+      var reservedCenter = 360;
+      var leftNow = leftPanelWidth + PANEL_RESIZER_WIDTH;
+      var rightResizer = PANEL_RESIZER_WIDTH;
+      var computed = shellWidth - reservedCenter - leftNow - rightResizer;
+      return clamp(computed, minPanelWidth, maxPanelWidth);
+    }
+
+    function syncPanelWidthsToViewport() {
+      if (window.innerWidth <= 640) return;
+
+      var leftMax = getAvailablePanelMaxWidth();
+      leftPanelWidth = clamp(leftPanelWidth, minPanelWidth, leftMax);
+
+      var rightMax = getAvailableRightPanelMaxWidth();
+      rightPanelWidth = clamp(rightPanelWidth, minPanelWidth, rightMax);
+
+      applyPanelWidths();
+    }
+
+    function updatePanelWidthBadge(side, clientX, clientY) {
+      var badge = gi("panel-width-badge");
+      if (!badge) return;
+      var width = side === "left" ? leftPanelWidth : rightPanelWidth;
+      badge.textContent = Math.round(width) + "px";
+      badge.classList.add("active");
+      badge.style.left = Math.round(clientX) + "px";
+      badge.style.top = Math.round(clientY) + "px";
+    }
+
+    function hidePanelWidthBadge() {
+      var badge = gi("panel-width-badge");
+      if (!badge) return;
+      badge.classList.remove("active");
+    }
+
+    function beginPanelResize(side, e) {
+      if (window.innerWidth <= 640) return;
+      if (e.button != null && e.button !== 0) return;
+
+      var shell = document.querySelector(".editor-main-shell");
+      if (!shell) return;
+
+      var leftResizer = gi("left-resizer");
+      var rightResizer = gi("right-resizer");
+      var resizer = side === "left" ? leftResizer : rightResizer;
+      if (!resizer || resizer.classList.contains("is-hidden")) return;
+
+      if (e.pointerId != null && resizer.setPointerCapture) {
+        try { resizer.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+
+      if (leftResizer) leftResizer.classList.toggle("active", side === "left");
+      if (rightResizer) rightResizer.classList.toggle("active", side === "right");
+
+      panelResizeState = {
+        side: side,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startLeft: leftPanelWidth,
+        startRight: rightPanelWidth
+      };
+      shell.classList.add("resizing");
+      document.body.style.cursor = "col-resize";
+
+      var overlay = gi("panel-resize-overlay");
+      if (overlay) {
+        overlay.classList.add("active");
+        overlay.setAttribute("aria-hidden", "false");
+      }
+
+      updatePanelWidthBadge(side, e.clientX, e.clientY);
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function onPanelResizeMove(e) {
+      if (!panelResizeState) return;
+      if (
+        panelResizeState.pointerId != null &&
+        e.pointerId != null &&
+        e.pointerId !== panelResizeState.pointerId
+      ) {
+        return;
+      }
+
+      var dx = e.clientX - panelResizeState.startX;
+      if (panelResizeState.side === "left") {
+        var leftMax = getAvailablePanelMaxWidth();
+        leftPanelWidth = clamp(panelResizeState.startLeft + dx, minPanelWidth, leftMax);
+      } else {
+        var rightMax = getAvailableRightPanelMaxWidth();
+        rightPanelWidth = clamp(panelResizeState.startRight - dx, minPanelWidth, rightMax);
+      }
+
+      applyPanelWidth(panelResizeState.side);
+      updatePanelWidthBadge(panelResizeState.side, e.clientX, e.clientY);
+      e.preventDefault();
+    }
+
+    function endPanelResize(e) {
+      if (!panelResizeState) return;
+      if (
+        e &&
+        panelResizeState.pointerId != null &&
+        e.pointerId != null &&
+        e.pointerId !== panelResizeState.pointerId
+      ) {
+        return;
+      }
+
+      var side = panelResizeState.side;
+      var leftResizer = gi("left-resizer");
+      var rightResizer = gi("right-resizer");
+      var resizer = side === "left" ? leftResizer : rightResizer;
+
+      if (
+        e &&
+        e.pointerId != null &&
+        resizer &&
+        resizer.hasPointerCapture &&
+        resizer.hasPointerCapture(e.pointerId)
+      ) {
+        try { resizer.releasePointerCapture(e.pointerId); } catch (err) {}
+      }
+
+      panelResizeState = null;
+
+      var shell = document.querySelector(".editor-main-shell");
+      if (shell) shell.classList.remove("resizing");
+      document.body.style.cursor = "";
+
+      var overlay = gi("panel-resize-overlay");
+      if (overlay) {
+        overlay.classList.remove("active");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+      hidePanelWidthBadge();
+
+      if (leftResizer) leftResizer.classList.remove("active");
+      if (rightResizer) rightResizer.classList.remove("active");
+
+      savePanelWidths();
+
+      if (zoomMode === "fit") {
+        fitReportToViewport();
+        centerReportStageHorizontallyLater();
+      }
+    }
+
+    function resetPanelWidth(side) {
+      if (window.innerWidth <= 640) return;
+      if (side === "left") {
+        leftPanelWidth = defaultPanelWidth;
+        applyPanelWidth("left");
+      } else {
+        rightPanelWidth = defaultPanelWidth;
+        applyPanelWidth("right");
+      }
+      syncPanelWidthsToViewport();
+      savePanelWidths();
+      if (zoomMode === "fit") {
+        fitReportToViewport();
+        centerReportStageHorizontallyLater();
+      }
+    }
+
+    function bindPanelResizer(resizer, side) {
+      if (!resizer) return;
+
+      resizer.addEventListener("pointerdown", function(e) {
+        beginPanelResize(side, e);
+      });
+      resizer.addEventListener("pointermove", onPanelResizeMove);
+      resizer.addEventListener("pointerup", endPanelResize);
+      resizer.addEventListener("pointercancel", endPanelResize);
+      resizer.addEventListener("lostpointercapture", endPanelResize);
+
+      resizer.addEventListener("dblclick", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        resetPanelWidth(side);
+      });
+    }
+    function getClassNameText(el) {
+      if (!el) return "";
+      if (typeof el.className === "string") return el.className;
+      if (el.className && typeof el.className.baseVal === "string") return el.className.baseVal;
+      return "";
+    }
+
+    function setPageTitle(title) {
+      var t = (title || "").trim() || "HTML Editor";
+      pageTitleText = t;
+
+      try {
+        var doc = getDoc();
+        if (doc) doc.title = t;
+      } catch (e) {}
+    }
+
+    function setStylePanelVisible(visible) {
+      var panel = document.querySelector(".editor-style-panel");
+      var btn = gi("btn-toggle-style-panel");
+      if (!panel || !btn) return;
+
+      if (!hasImportedFile) {
+        stylePanelVisible = false;
+        panel.style.display = "none";
+        setRightResizerVisible(false);
+        btn.disabled = true;
+        btn.classList.remove("active");
+        btn.textContent = currentLanguage === "zh" ? "显示属性编辑" : "Show Properties";
+        return;
+      }
+
+      btn.disabled = false;
+      stylePanelVisible = !!visible;
+      panel.style.display = stylePanelVisible ? "flex" : "none";
+      setRightResizerVisible(stylePanelVisible);
+      btn.classList.toggle("active", stylePanelVisible);
+      btn.textContent = stylePanelVisible
+        ? (currentLanguage === "zh" ? "隐藏属性编辑" : "Hide Properties")
+        : (currentLanguage === "zh" ? "显示属性编辑" : "Show Properties");
+
+      syncPanelWidthsToViewport();
+
+      if (zoomMode === "fit") {
+        setTimeout(function() {
+          fitReportToViewport();
+          centerReportStageHorizontallyLater();
+        }, 0);
+      } else {
+        centerReportStageHorizontallyLater();
+      }
+    }
+
+    function showStageError(message) {
+      var box = gi("stage-error");
+      if (!box) return;
+      box.textContent = message || "HTML rendering failed.";
+      box.style.display = "flex";
+    }
+
+    function hideStageError() {
+      var box = gi("stage-error");
+      if (!box) return;
+      box.style.display = "none";
+      box.textContent = "";
+    }
+
+    function isCompleteHtmlDocument(text) {
+      if (!text) return false;
+      return /<html[\s>]/i.test(text)
+        && /<body[\s>]/i.test(text)
+        && /<\/body>/i.test(text)
+        && /<\/html>/i.test(text);
+    }
+
+    function openCodeImportModal() {
+      var modal = gi("code-import-modal");
+      var text = gi("code-import-text");
+      if (!modal || !text) return;
+      modal.style.display = "flex";
+      setTimeout(function() { text.focus(); }, 0);
+    }
+
+    function closeCodeImportModal() {
+      var modal = gi("code-import-modal");
+      if (!modal) return;
+      modal.style.display = "none";
+    }
+
+    function applyImportedHtml(htmlText, fileName) {
+      hasImportedFile = true;
+
+      selEl = null;
+      hovEl = null;
+      selectedEls = [];
+      dragging = false;
+      didDrag = false;
+      resizing = false;
+      didResize = false;
+      resizeHandleEl = null;
+      editorHandlersBound = false;
+      lastSnapshot = "";
+      redoSnapshot = "";
+      canvasWidth = defaultCanvasWidth;
+      canvasHeight = defaultCanvasHeight;
+      canvasSizeLocked = false;
+      setCanvasPresetActive("canvas-default");
+      previewScale = 1;
+      zoomMode = "fit";
+
+      currentFileName = fileName || "code_import.html";
+      setPageTitle("HTML Editor");
+      originalHtmlText = htmlText;
+
+      hideStageError();
+      iframe.srcdoc = htmlText;
+
+      gi("btn-header-export").disabled = false;
+      gi("btn-reset").style.display = "";
+
+      gi("top-bar").textContent = "Loaded: " + currentFileName;
+      updateTagDisplay(null);
+      updateSelectionCount();
+      gi("spTip").style.display = "";
+      gi("spMain").style.display = "none";
+      setStylePanelVisible(currentMode === "edit");
+    }
+
+    function importHtmlCodeFromText() {
+      var textArea = gi("code-import-text");
+      if (!textArea) return;
+      var htmlText = textArea.value || "";
+
+      if (!htmlText.trim()) {
+        closeCodeImportModal();
+        showStageError("HTML code is empty. Please paste complete code first.");
+        return;
+      }
+      if (!isCompleteHtmlDocument(htmlText)) {
+        closeCodeImportModal();
+        showStageError("Incomplete HTML code. Please include <html>, <body>, and matching closing tags.");
+        return;
+      }
+
+      closeCodeImportModal();
+      applyImportedHtml(htmlText, "code_import.html");
+    }
+
+    function applyTf(el) {
+      var tx = getN(el, "data-tx");
+      var ty = getN(el, "data-ty");
+      var rot = getN(el, "data-rot");
+      var sc = el.getAttribute("data-sc") ? parseFloat(el.getAttribute("data-sc")) : 1;
+      el.style.transform = "translate(" + tx + "px," + ty + "px) rotate(" + rot + "deg) scale(" + sc + ")";
+    }
+
+    function applyElementSize(el, widthPx, heightPx) {
+      if (!el) return;
+      if (el.tagName && el.tagName.toLowerCase() === "img") {
+        // 覆盖外部Style中的 max-width:100% 等限制，确保Image可放大
+        if (widthPx > 0) el.style.setProperty("width", widthPx + "px", "important");
+        else el.style.removeProperty("width");
+
+        if (heightPx > 0) el.style.setProperty("height", heightPx + "px", "important");
+        else el.style.removeProperty("height");
+
+        el.style.setProperty("max-width", "none", "important");
+        el.style.setProperty("max-height", "none", "important");
+        return;
+      }
+
+      el.style.width = widthPx > 0 ? (widthPx + "px") : "";
+      el.style.height = heightPx > 0 ? (heightPx + "px") : "";
+    }
+
+    function toHex(rgb) {
+      if (!rgb || rgb === "transparent") return "";
+      if (rgb.indexOf("#") === 0) {
+        if (rgb.length === 4) return "#" + rgb[1] + rgb[1] + rgb[2] + rgb[2] + rgb[3] + rgb[3];
+        return rgb;
+      }
+      var m = rgb.match(/\d+/g);
+      if (!m || m.length < 3) return "#000000";
+      var r = ("0" + parseInt(m[0], 10).toString(16)).slice(-2);
+      var g = ("0" + parseInt(m[1], 10).toString(16)).slice(-2);
+      var b = ("0" + parseInt(m[2], 10).toString(16)).slice(-2);
+      return "#" + r + g + b;
+    }
+
+    function px(v) {
+      if (!v || v === "auto" || v === "normal") return 0;
+      return parseInt(v, 10) || 0;
+    }
+
+    function setStyle(prop, val) {
+      if (!selEl) return;
+      saveHistory("style:" + prop);
+      selEl.style[prop] = val;
+    }
+
+    function updateTagDisplay(el) {
+      var box = gi("tag-display");
+      if (!el) {
+        box.innerHTML = '<span style="color:#ccc">None</span>';
+        return;
+      }
+      var tag = (el.tagName || "").toLowerCase();
+      var id = el.id ? ("#" + el.id) : "";
+      var cls = "";
+      var classText = getClassNameText(el);
+      if (classText) {
+        var arr = classText.trim().split(/\s+/).filter(function(c) {
+          return c && c !== "__hs" && c !== "__hh" && c !== "__hd" && c !== "__hm" && c !== "__rz_wrap" && c !== "__rz_img_host";
+        });
+        if (arr.length) cls = "." + arr.join(".");
+      }
+      box.textContent = "<" + tag + id + cls + ">";
+    }
+
+    function updateSelectionCount() {
+      var copy = editorTranslations[currentLanguage] || editorTranslations.en;
+      gi("sel-count").textContent = copy.selectedCount + selectedEls.length;
+      renderSyncStack();
+    }
+
+    function normalizeSyncElement(el) {
+      if (!el) return null;
+      if (el.classList && el.classList.contains("__rz_img_host")) {
+        var wrapped = el.querySelector("img");
+        return wrapped || el;
+      }
+      return el;
+    }
+
+    function pruneSyncStack() {
+      var doc = getDoc();
+      var next = [];
+      for (var i = 0; i < syncStack.length; i++) {
+        var el = normalizeSyncElement(syncStack[i]);
+        if (!el) continue;
+        if (doc && el.ownerDocument !== doc) continue;
+        if (!el.isConnected) continue;
+        if (next.indexOf(el) > -1) continue;
+        next.push(el);
+      }
+      syncStack = next;
+      syncTagName = syncStack.length ? (syncStack[0].tagName || "").toLowerCase() : "";
+    }
+
+    function getSyncElementLabel(el) {
+      if (!el) return "";
+      var tag = (el.tagName || "").toLowerCase();
+      var id = el.id ? ("#" + el.id) : "";
+      var cls = "";
+      var classText = getClassNameText(el);
+      if (classText) {
+        var arr = classText.trim().split(/\s+/).filter(function(c) {
+          return c && c !== "__hs" && c !== "__hh" && c !== "__hd" && c !== "__hm" && c !== "__rz_wrap" && c !== "__rz_img_host";
+        });
+        if (arr.length) cls = "." + arr.slice(0, 2).join(".");
+      }
+      return "<" + tag + id + cls + ">";
+    }
+
+    function renderSyncStack() {
+      var box = gi("sync-list");
+      if (!box) return;
+      var copy = editorTranslations[currentLanguage] || editorTranslations.en;
+
+      pruneSyncStack();
+      box.innerHTML = "";
+
+      if (!syncStack.length) {
+        box.innerHTML = '<div class="hint-box">' + copy.syncEmpty + "</div>";
+      } else {
+        for (var i = 0; i < syncStack.length; i++) {
+          var item = document.createElement("div");
+          item.className = "sync-item";
+          var el = syncStack[i];
+          if (selEl === el) item.classList.add("active");
+          item.innerHTML = getSyncElementLabel(el) + '<small>' + copy.syncType + (el.tagName || "").toLowerCase() + '</small>';
+          box.appendChild(item);
+        }
+      }
+
+      var addBtn = gi("btn-sync-add");
+      var rmBtn = gi("btn-sync-remove");
+      var clrBtn = gi("btn-sync-clear");
+      if (addBtn) addBtn.disabled = !selEl;
+      if (rmBtn) rmBtn.disabled = !(selEl && syncStack.indexOf(normalizeSyncElement(selEl)) > -1);
+      if (clrBtn) clrBtn.disabled = !syncStack.length;
+    }
+
+    function clearSyncStack(silent) {
+      syncStack = [];
+      syncTagName = "";
+      renderSyncStack();
+      if (!silent) gi("top-bar").textContent = "Sync stack cleared.";
+    }
+
+    function addCurrentToSyncStack() {
+      var el = normalizeSyncElement(selEl);
+      if (!el) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return;
+      }
+
+      pruneSyncStack();
+
+      var tag = (el.tagName || "").toLowerCase();
+      if (!tag) return;
+
+      if (syncStack.length && tag !== syncTagName) {
+        gi("top-bar").textContent = "Sync stack only allows same-type elements. Required type: " + syncTagName;
+        return;
+      }
+
+      if (syncStack.indexOf(el) > -1) {
+        gi("top-bar").textContent = "This element is already in the sync stack.";
+        renderSyncStack();
+        return;
+      }
+
+      syncStack.push(el);
+      syncTagName = tag;
+      renderSyncStack();
+      gi("top-bar").textContent = "Added to sync stack: " + getSyncElementLabel(el);
+    }
+
+    function removeCurrentFromSyncStack() {
+      var el = normalizeSyncElement(selEl);
+      if (!el) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return;
+      }
+
+      pruneSyncStack();
+      var idx = syncStack.indexOf(el);
+      if (idx < 0) {
+        gi("top-bar").textContent = "Current element is not in the sync stack.";
+        renderSyncStack();
+        return;
+      }
+
+      syncStack.splice(idx, 1);
+      syncTagName = syncStack.length ? (syncStack[0].tagName || "").toLowerCase() : "";
+      renderSyncStack();
+      gi("top-bar").textContent = "Removed current element from sync stack.";
+    }
+
+    function applySyncMoveFromSource(sourceEl, dx, dy) {
+      if ((!dx && !dy) || !sourceEl) return;
+      pruneSyncStack();
+      if (syncStack.length < 2) return;
+
+      var src = normalizeSyncElement(sourceEl);
+      if (!src || syncStack.indexOf(src) < 0) return;
+
+      for (var i = 0; i < syncStack.length; i++) {
+        var el = syncStack[i];
+        if (el === src) continue;
+        if (selectedEls.indexOf(el) > -1) continue;
+        var tx = getN(el, "data-tx") + dx;
+        var ty = getN(el, "data-ty") + dy;
+        el.setAttribute("data-tx", Math.round(tx));
+        el.setAttribute("data-ty", Math.round(ty));
+        applyTf(el);
+      }
+    }
+
+    function clearHover() {
+      if (hovEl) {
+        hovEl.classList.remove("__hh");
+        hovEl = null;
+      }
+    }
+
+    function removeResizeHandle() {
+      try {
+        if (resizeHandleEl && resizeHandleEl.parentNode) {
+          resizeHandleEl.parentNode.removeChild(resizeHandleEl);
+        }
+      } catch (e) {}
+      resizeHandleEl = null;
+    }
+
+    function ensureElementResizableAnchor(el) {
+      if (!el) return null;
+
+      // img 元素不能挂子节点，先包一层 host 承载 resize 句柄
+      if (el.tagName && el.tagName.toLowerCase() === "img") {
+        var parent = el.parentNode;
+        if (!parent) return null;
+
+        if (!parent.classList || !parent.classList.contains("__rz_img_host")) {
+          var host = el.ownerDocument.createElement("span");
+          host.className = "__rz_img_host";
+          parent.insertBefore(host, el);
+          host.appendChild(el);
+          parent = host;
+        }
+
+        var pcs = getComputedStyle(parent);
+        if (pcs.display === "inline") {
+          parent.style.display = "inline-block";
+        }
+        if (pcs.position === "static") {
+          parent.style.position = "relative";
+        }
+
+        el.classList.add("__rz_wrap");
+        return parent;
+      }
+
+      var cs = getComputedStyle(el);
+      if (cs.display === "inline") {
+        el.style.display = "inline-block";
+      }
+      if (cs.position === "static") {
+        el.style.position = "relative";
+      }
+      el.classList.add("__rz_wrap");
+      return el;
+    }
+
+    function attachResizeHandle(el) {
+      removeResizeHandle();
+      if (!el || !el.parentNode) return;
+      if (el.tagName === "HTML" || el.tagName === "BODY") return;
+
+      var doc = getDoc();
+      if (!doc) return;
+
+      var resizeHost = ensureElementResizableAnchor(el);
+      if (!resizeHost) return;
+
+      var h = doc.createElement("div");
+      h.className = "__rz_handle";
+      h.setAttribute("data-role", "resize-handle");
+      h.title = "Drag to resize";
+
+      h.addEventListener("mousedown", function(e) {
+        if (currentMode !== "edit") return;
+        if (!selEl) return;
+
+        saveHistory("resize");
+
+        resizing = true;
+        didResize = false;
+        dx0 = e.clientX;
+        dy0 = e.clientY;
+
+        var rect = selEl.getBoundingClientRect();
+        rw0 = Math.round(rect.width);
+        rh0 = Math.round(rect.height);
+
+        try { getDoc().body.classList.add("__hd"); } catch (er) {}
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+
+      resizeHost.appendChild(h);
+      resizeHandleEl = h;
+    }
+
+    function refreshResizeHandle() {
+      removeResizeHandle();
+      if (currentMode !== "edit") return;
+      if (!selEl) return;
+      attachResizeHandle(selEl);
+    }
+
+    function clearSelectionVisualOnly() {
+      clearHover();
+      removeResizeHandle();
+      if (selEl) selEl.classList.remove("__hs");
+      for (var i = 0; i < selectedEls.length; i++) {
+        selectedEls[i].classList.remove("__hm");
+        selectedEls[i].classList.remove("__hs");
+      }
+    }
+
+    function clearSelection() {
+      clearSelectionVisualOnly();
+      removeResizeHandle();
+      selEl = null;
+      selectedEls = [];
+      updateSelectionCount();
+      updateTagDisplay(null);
+      gi("spTip").style.display = "";
+      gi("spMain").style.display = "none";
+      refreshTextEditor();
+      refreshImageEditor();
+    }
+
+    function isSelected(el) {
+      return selectedEls.indexOf(el) > -1;
+    }
+
+    function addToSelection(el, makePrimary) {
+      if (!el || el.tagName === "HTML" || el.tagName === "BODY") return;
+      if (!isSelected(el)) selectedEls.push(el);
+
+      for (var i = 0; i < selectedEls.length; i++) {
+        selectedEls[i].classList.remove("__hs");
+        selectedEls[i].classList.add("__hm");
+      }
+
+      if (makePrimary !== false) {
+        selEl = el;
+        selEl.classList.remove("__hm");
+        selEl.classList.add("__hs");
+      } else if (!selEl) {
+        selEl = el;
+        selEl.classList.remove("__hm");
+        selEl.classList.add("__hs");
+      } else {
+        selEl.classList.remove("__hm");
+        selEl.classList.add("__hs");
+      }
+
+      updateSelectionCount();
+      updateTagDisplay(selEl);
+      fillPanel();
+      refreshTextEditor();
+      refreshImageEditor();
+      refreshResizeHandle();
+    }
+
+    function removeFromSelection(el) {
+      if (!el) return;
+      var idx = selectedEls.indexOf(el);
+      if (idx > -1) selectedEls.splice(idx, 1);
+      el.classList.remove("__hm");
+      el.classList.remove("__hs");
+
+      if (selEl === el) {
+        selEl = selectedEls.length ? selectedEls[selectedEls.length - 1] : null;
+        if (selEl) {
+          selEl.classList.remove("__hm");
+          selEl.classList.add("__hs");
+        }
+      }
+
+      updateSelectionCount();
+      if (selEl) {
+        updateTagDisplay(selEl);
+        fillPanel();
+        refreshTextEditor();
+        refreshImageEditor();
+      } else {
+        updateTagDisplay(null);
+        gi("spTip").style.display = "";
+        gi("spMain").style.display = "none";
+        refreshTextEditor();
+        refreshImageEditor();
+      }
+      refreshResizeHandle();
+    }
+
+    function selectSingle(el) {
+      clearSelectionVisualOnly();
+      selectedEls = [];
+      selEl = null;
+      addToSelection(el, true);
+      refreshResizeHandle();
+    }
+
+    function toggleMultiSelect(el) {
+      if (isSelected(el)) removeFromSelection(el);
+      else addToSelection(el, true);
+    }
+
+    function getSelectionTargets() {
+      if (selectedEls.length) return selectedEls.slice();
+      return selEl ? [selEl] : [];
+    }
+
+    function isTypingTarget(node) {
+      if (!node) return false;
+      if (node.isContentEditable) return true;
+      var tag = (node.tagName || "").toLowerCase();
+      return tag === "input" || tag === "textarea" || tag === "select";
+    }
+
+    function nudgeSelectionByKeyboard(dx, dy) {
+      if (currentMode !== "edit") return false;
+
+      var targets = getSelectionTargets();
+      if (!targets.length) return false;
+
+      saveHistory("nudge");
+      for (var i = 0; i < targets.length; i++) {
+        var el = targets[i];
+        var tx = getN(el, "data-tx") + dx;
+        var ty = getN(el, "data-ty") + dy;
+        el.setAttribute("data-tx", Math.round(tx));
+        el.setAttribute("data-ty", Math.round(ty));
+        applyTf(el);
+        applySyncMoveFromSource(el, dx, dy);
+      }
+
+      if (selEl) {
+        noFill = true;
+        if (gi("sTx")) gi("sTx").value = getN(selEl, "data-tx");
+        if (gi("sTy")) gi("sTy").value = getN(selEl, "data-ty");
+        clearTimeout(window.__kbdt);
+        window.__kbdt = setTimeout(function(){ noFill = false; }, 120);
+      }
+
+      refreshResizeHandle();
+      return true;
+    }
+
+    function onEditorKeyDown(e) {
+      if (!e) return;
+      if (isTypingTarget(e.target)) return;
+
+      var key = (e.key || "").toLowerCase();
+      var withCmd = !!(e.ctrlKey || e.metaKey);
+
+      if (withCmd && key === "z") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (shortcutLock) return;
+        shortcutLock = true;
+        setTimeout(function() { shortcutLock = false; }, 0);
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+
+      if (withCmd && key === "y") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (shortcutLock) return;
+        shortcutLock = true;
+        setTimeout(function() { shortcutLock = false; }, 0);
+        redo();
+        return;
+      }
+
+      if (withCmd && key === "c") {
+        if (currentMode !== "edit") return;
+        e.preventDefault();
+        e.stopPropagation();
+        duplicateNode();
+        return;
+      }
+
+      if (withCmd && key === "d") {
+        if (currentMode !== "edit") return;
+        e.preventDefault();
+        e.stopPropagation();
+        deleteNode();
+        return;
+      }
+
+      if (e.altKey && e.key === "ArrowUp") {
+        if (currentMode !== "edit") return;
+        e.preventDefault();
+        selectParentNode();
+        return;
+      }
+
+      if (e.key === "Escape") {
+        if (currentMode !== "edit") return;
+        e.preventDefault();
+        e.stopPropagation();
+        selectParentNode();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        if (currentMode !== "edit") return;
+        e.preventDefault();
+        e.stopPropagation();
+        selectSiblingNode(e.shiftKey ? -1 : 1);
+        return;
+      }
+
+      if (!withCmd && !e.altKey && key === "i") {
+        if (currentMode !== "edit") return;
+        e.preventDefault();
+        e.stopPropagation();
+        selectChildNode();
+        return;
+      }
+
+      if (!withCmd && !e.altKey && !e.shiftKey && (key === "w" || key === "a" || key === "s" || key === "d")) {
+        if (currentMode !== "edit") return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (key === "w") selectParentNode();
+        else if (key === "s") selectChildNode();
+        else if (key === "a") selectSiblingNode(-1);
+        else selectSiblingNode(1);
+        return;
+      }
+
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      var step = e.shiftKey ? 10 : 1;
+      var dx = 0;
+      var dy = 0;
+
+      if (e.key === "ArrowLeft") dx = -step;
+      else if (e.key === "ArrowRight") dx = step;
+      else if (e.key === "ArrowUp") dy = -step;
+      else if (e.key === "ArrowDown") dy = step;
+      else return;
+
+      if (!nudgeSelectionByKeyboard(dx, dy)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function isTextLikeElement(el) {
+      if (!el || !el.tagName) return false;
+      var tag = el.tagName.toLowerCase();
+      var allow = ["p","span","a","button","label","li","td","th","strong","em","b","i","small","h1","h2","h3","h4","h5","h6"];
+      if (allow.indexOf(tag) > -1) return true;
+      if (tag === "div") {
+        var hasDirectText = false;
+        for (var i = 0; i < el.childNodes.length; i++) {
+          var node = el.childNodes[i];
+          if (node && node.nodeType === 3 && /\S/.test(node.nodeValue || "")) {
+            hasDirectText = true;
+            break;
+          }
+        }
+        if (hasDirectText) return true;
+        var childCount = el.children.length;
+        if (childCount === 0) return true;
+        if (childCount === 1 && el.children[0].tagName && ["SPAN","B","I","STRONG","EM","SMALL"].indexOf(el.children[0].tagName) > -1) return true;
+      }
+      return false;
+    }
+
+    function resolveEditableTextElement(baseEl) {
+      if (!baseEl || !baseEl.tagName) return null;
+      if (isTextLikeElement(baseEl)) return baseEl;
+
+      var cur = baseEl.parentElement;
+      while (cur && cur.tagName !== "BODY" && cur.tagName !== "HTML") {
+        if (isTextLikeElement(cur)) return cur;
+        cur = cur.parentElement;
+      }
+
+      var candidate = baseEl.querySelector("p,span,a,button,label,li,td,th,strong,em,b,i,small,h1,h2,h3,h4,h5,h6,div");
+      if (candidate && isTextLikeElement(candidate)) return candidate;
+      return null;
+    }
+
+    function getEditableText(el) {
+      if (!el) return "";
+      var target = resolveEditableTextElement(el);
+      if (!target) return "";
+      return target.innerText != null ? target.innerText : (target.textContent || "");
+    }
+
+    function applyEditableText(el, value) {
+      if (!el) return;
+      var target = resolveEditableTextElement(el);
+      if (!target || !isTextLikeElement(target)) return;
+      target.textContent = value;
+    }
+
+    function refreshTextEditor() {
+      var help = gi("text-help");
+      var area = gi("sText");
+      var copy = editorTranslations[currentLanguage] || editorTranslations.en;
+      if (!selEl) {
+        area.value = "";
+        area.disabled = true;
+        help.className = "text-help";
+        help.textContent = copy.textHelpEmpty;
+        return;
+      }
+      if (resolveEditableTextElement(selEl)) {
+        area.disabled = false;
+        area.value = getEditableText(selEl);
+        help.className = "text-help ok";
+        help.textContent = copy.textHelpOk;
+      } else {
+        area.value = "";
+        area.disabled = true;
+        help.className = "text-help warn";
+        help.textContent = copy.textHelpWarn;
+      }
+    }
+
+    function refreshImageEditor() {
+      var help = gi("img-help");
+      var input = gi("sImgSrc");
+      var copy = editorTranslations[currentLanguage] || editorTranslations.en;
+      if (!selEl) {
+        input.value = "";
+        input.disabled = true;
+        gi("btn-apply-img").disabled = true;
+        gi("btn-pick-img").disabled = true;
+        help.className = "text-help";
+        help.textContent = copy.imageHelpEmpty;
+        return;
+      }
+      if (selEl.tagName && selEl.tagName.toLowerCase() === "img") {
+        input.disabled = false;
+        input.value = selEl.getAttribute("src") || "";
+        gi("btn-apply-img").disabled = false;
+        gi("btn-pick-img").disabled = false;
+        help.className = "text-help ok";
+        help.textContent = copy.imageHelpOk;
+      } else {
+        input.value = "";
+        input.disabled = true;
+        gi("btn-apply-img").disabled = true;
+        gi("btn-pick-img").disabled = true;
+        help.className = "text-help warn";
+        help.textContent = copy.imageHelpWarn;
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      var copy = editorTranslations[currentLanguage] || editorTranslations.en;
+      var modeText = gi("header-mode-text");
+      gi("btn-mode-edit").classList.toggle("active", mode === "edit");
+      gi("btn-mode-live").classList.toggle("active", mode === "live");
+      if (mode === "edit") {
+        setStylePanelVisible(true);
+        if (modeText) {
+          modeText.textContent = copy.modeHintEdit;
+          modeText.classList.remove("live");
+          modeText.classList.add("edit");
+        }
+        gi("mode-hint").textContent = copy.modeHintEdit;
+        gi("top-bar").textContent = currentLanguage === "zh" ? "可单选、多选、对齐、拖拽，并编辑文本和图片。" : "Single-select, multi-select, align, drag, and edit text/images.";
+      } else {
+        setStylePanelVisible(false);
+        clearSelection();
+        clearHover();
+        if (modeText) {
+          modeText.textContent = copy.modeHintLive;
+          modeText.classList.remove("edit");
+          modeText.classList.add("live");
+        }
+        gi("mode-hint").textContent = copy.modeHintLive;
+        gi("top-bar").textContent = currentLanguage === "zh" ? "浏览效果下，原页面按钮、Tab 和脚本逻辑均可正常运行。" : "In Live View, original page buttons, tabs, and scripts work normally.";
+      }
+      refreshResizeHandle();
+    }
+
+    function setZoomButtonActive(id) {
+      var ids = ["zoom-25", "zoom-50", "zoom-75", "zoom-100", "zoom-fit"];
+      for (var i = 0; i < ids.length; i++) {
+        var btn = gi(ids[i]);
+        if (btn) btn.classList.toggle("active", ids[i] === id);
+      }
+    }
+
+    function setCanvasPresetActive(id) {
+      var ids = ["canvas-default", "canvas-16-9", "canvas-4-3"];
+      for (var i = 0; i < ids.length; i++) {
+        var btn = gi(ids[i]);
+        if (btn) btn.classList.toggle("active", ids[i] === id);
+      }
+    }
+
+    function applyReportScale(scale, label) {
+      var stage = gi("report-stage");
+      var wrap = gi("report-stage-wrap");
+      var iframeEl = gi("preview-viewport");
+      if (!stage || !wrap || !iframeEl) return;
+
+      previewScale = scale;
+
+      stage.style.width = canvasWidth + "px";
+      stage.style.height = canvasHeight + "px";
+      iframeEl.style.width = canvasWidth + "px";
+      iframeEl.style.height = canvasHeight + "px";
+      stage.style.transform = "scale(" + scale + ")";
+
+      var copy = editorTranslations[currentLanguage] || editorTranslations.en;
+      gi("zoom-status").textContent =
+        copy.zoomStatus + label + " | " + copy.canvasStatus + canvasWidth + " × " + canvasHeight;
+
+      syncPanelUiZoomToPreview();
+      refreshResizeHandle();
+    }
+
+    function setFixedZoom(scale, btnId, label) {
+      zoomMode = "fixed";
+      applyReportScale(scale, label);
+      setZoomButtonActive(btnId);
+    }
+
+    function zoomWithModifierWheel(e) {
+      if (!e || !(e.ctrlKey || e.metaKey)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      var direction = e.deltaY < 0 ? 1 : -1;
+      var nextScale = clamp(Math.round((previewScale + (direction * 0.1)) * 100) / 100, 0.25, 2);
+      if (nextScale === previewScale) return;
+
+      zoomMode = "fixed";
+      applyReportScale(nextScale, Math.round(nextScale * 100) + "%");
+      setZoomButtonActive("");
+      centerReportStageHorizontallyLater();
+    }
+
+    function refreshCanvasScaleDisplay() {
+      if (zoomMode === "fit") fitReportToViewport();
+      else applyReportScale(previewScale, Math.round(previewScale * 100) + "%");
+    }
+
+    function setCanvasSize(width, height, lockSize, reasonLabel, presetId) {
+      var w = Math.round(parseFloat(width) || 0);
+      var h = Math.round(parseFloat(height) || 0);
+
+      if (w < 320 || h < 180) {
+        gi("top-bar").textContent = "Canvas is too small. Minimum is 320 x 180.";
+        return;
+      }
+
+      canvasWidth = w;
+      canvasHeight = h;
+      canvasSizeLocked = !!lockSize;
+      setCanvasPresetActive(presetId || "");
+
+      refreshCanvasScaleDisplay();
+      gi("top-bar").textContent = "Canvas set: " + w + " x " + h + (reasonLabel ? (" (" + reasonLabel + ")") : "");
+    }
+
+    function setCanvasRatio(rw, rh, label) {
+      var w = canvasWidth || defaultCanvasWidth;
+      var h = Math.round((w * rh) / rw);
+      var presetId = (rw === 16 && rh === 9) ? "canvas-16-9" : ((rw === 4 && rh === 3) ? "canvas-4-3" : "");
+      setCanvasSize(w, h, true, label, presetId);
+    }
+
+    function setCanvasToDefault() {
+      setCanvasSize(defaultCanvasWidth, defaultCanvasHeight, false, "Default", "canvas-default");
+    }
+
+    function promptCanvasSizeEdit() {
+      var input = prompt("Enter canvas size (e.g. 1920x1080):", canvasWidth + "x" + canvasHeight);
+      if (input === null) return;
+
+      var m = (input || "").trim().match(/^(\d+)\s*[xX*]\s*(\d+)$/);
+      if (!m) {
+        alert("Invalid format. Use widthxheight, e.g. 1920x1080");
+        return;
+      }
+
+      setCanvasSize(parseInt(m[1], 10), parseInt(m[2], 10), true, "Custom", "");
+    }
+
+    function fitReportToViewport() {
+      var wrap = gi("report-stage-wrap");
+      if (!wrap) return;
+
+      var availableWidth = wrap.clientWidth - 48;
+      var availableHeight = wrap.clientHeight - 48;
+
+      var scaleX = availableWidth / canvasWidth;
+      var scaleY = availableHeight / canvasHeight;
+      var scale = Math.min(scaleX, scaleY);
+
+      if (!isFinite(scale) || scale <= 0) scale = 1;
+      if (scale > 1) scale = 1;
+
+      zoomMode = "fit";
+      var copy = editorTranslations[currentLanguage] || editorTranslations.en;
+      applyReportScale(scale, copy.fit + " " + Math.round(scale * 100) + "%");
+      setZoomButtonActive("zoom-fit");
+    }
+
+    function centerReportStageHorizontally() {
+      var wrap = gi("report-stage-wrap");
+      if (!wrap) return;
+      var maxLeft = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
+      wrap.scrollLeft = Math.round(maxLeft / 2);
+    }
+
+    function primeReportStageCenteredScroll() {
+      var wrap = gi("report-stage-wrap");
+      if (!wrap) return;
+      var maxLeft = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
+      wrap.scrollLeft = Math.round(maxLeft / 2);
+    }
+
+    function centerReportStageHorizontallyLater() {
+      var delays = [0, 80, 180];
+      for (var i = 0; i < delays.length; i++) {
+        (function(delay) {
+          setTimeout(function() {
+            centerReportStageHorizontally();
+          }, delay);
+        })(delays[i]);
+      }
+    }
+
+    function updateCanvasHeightByContent() {
+      try {
+        if (canvasSizeLocked) return;
+        var doc = getDoc();
+        if (!doc) return;
+
+        var body = doc.body;
+        var html = doc.documentElement;
+        var realHeight = Math.max(
+          body ? body.scrollHeight : 0,
+          body ? body.offsetHeight : 0,
+          html ? html.clientHeight : 0,
+          html ? html.scrollHeight : 0,
+          html ? html.offsetHeight : 0
+        );
+
+        if (realHeight > 300) {
+          canvasHeight = realHeight;
+        } else {
+          canvasHeight = defaultCanvasHeight;
+        }
+
+        gi("report-stage").style.height = canvasHeight + "px";
+        gi("preview-viewport").style.height = canvasHeight + "px";
+      } catch (e) {}
+    }
+
+    function injectEditorStyle(doc) {
+      var old = doc.getElementById("__edst__");
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+
+      var st = doc.createElement("style");
+      st.id = "__edst__";
+      st.textContent =
+        ".__hs{outline:2px solid #4A74F3!important;outline-offset:2px!important;cursor:grab!important}" +
+        ".__hh{outline:1px dashed #9D5CE6!important;outline-offset:2px!important;cursor:grab!important}" +
+        ".__hd{cursor:grabbing!important;user-select:none!important}" +
+        ".__hm{outline:2px solid #9D5CE6!important;outline-offset:2px!important}" +
+        "svg,svg *{pointer-events:auto!important}" +
+        "svg path.__hs,svg line.__hs,svg polyline.__hs,svg polygon.__hs,svg rect.__hs,svg circle.__hs,svg ellipse.__hs{stroke:#4A74F3!important;stroke-width:3!important}" +
+        "svg path.__hm,svg line.__hm,svg polyline.__hm,svg polygon.__hm,svg rect.__hm,svg circle.__hm,svg ellipse.__hm{stroke:#9D5CE6!important;stroke-width:3!important}" +
+        "svg path.__hh,svg line.__hh,svg polyline.__hh,svg polygon.__hh,svg rect.__hh,svg circle.__hh,svg ellipse.__hh{stroke:#9D5CE6!important;stroke-dasharray:4 2!important}" +
+        ".__rz_handle{" +
+          "position:absolute!important;" +
+          "width:12px!important;" +
+          "height:12px!important;" +
+          "right:-8px!important;" +
+          "bottom:-8px!important;" +
+          "background:#2649B2!important;" +
+          "border:2px solid #fff!important;" +
+          "border-radius:50%!important;" +
+          "box-shadow:0 1px 4px rgba(0,0,0,.25)!important;" +
+          "cursor:nwse-resize!important;" +
+          "z-index:2147483647!important;" +
+        "}" +
+        ".__rz_wrap{position:relative!important;}" +
+        ".__rz_img_host{display:inline-block!important;position:relative!important;line-height:0!important;vertical-align:top!important;}";
+      if (doc.head) doc.head.appendChild(st);
+      else {
+        var hd = doc.createElement("head");
+        hd.appendChild(st);
+        doc.documentElement.insertBefore(hd, doc.documentElement.firstChild);
+      }
+    }
+
+    function neutralizeFormsOnly(doc) {
+      var forms = doc.getElementsByTagName("form");
+      for (var i = 0; i < forms.length; i++) {
+        forms[i].addEventListener("submit", function(ev) { ev.preventDefault(); });
+      }
+    }
+
+    // 解决空跳转页面重载的核心：拦截带有 '#' 的链接事件，防止触发 Iframe 重新加载
+    function neutralizeEmptyLinks(doc) {
+      doc.addEventListener("click", function(e) {
+        var target = e.target;
+        while (target && target.tagName !== "A") {
+          target = target.parentNode;
+        }
+        if (target && target.tagName === "A") {
+          var href = target.getAttribute("href");
+          if (!href || href === "#" || href.indexOf("#") === 0) {
+            // 允许页面的自定义 click 事件执行（例如 tab 切换），但阻止浏览器的重载/重定向Default行为
+            e.preventDefault(); 
+          }
+        }
+      }, false);
+    }
+
+    function bindEditorEvents(doc) {
+      if (editorHandlersBound) return;
+      doc.addEventListener("mouseover", onHov, false);
+      doc.addEventListener("mousedown", onMd, true);
+      doc.addEventListener("mousemove", onMm, true);
+      doc.addEventListener("mouseup", onMu, true);
+      doc.addEventListener("click", onClk, true);
+      doc.addEventListener("dblclick", onDblClk, true);
+      doc.addEventListener("keydown", onEditorKeyDown, true);
+      editorHandlersBound = true;
+    }
+
+    function getCurrentDocumentHtml() {
+      var doc = getDoc();
+      if (!doc) return "";
+      var clone = doc.documentElement.cloneNode(true);
+
+      var editorStyle = clone.querySelector("#__edst__");
+      if (editorStyle && editorStyle.parentNode) editorStyle.parentNode.removeChild(editorStyle);
+
+      var handles = clone.querySelectorAll("[data-role='resize-handle']");
+      for (var h = 0; h < handles.length; h++) {
+        if (handles[h].parentNode) handles[h].parentNode.removeChild(handles[h]);
+      }
+
+      var imgHosts = clone.querySelectorAll(".__rz_img_host");
+      for (var ih = 0; ih < imgHosts.length; ih++) {
+        var host = imgHosts[ih];
+        if (!host.parentNode) continue;
+        while (host.firstChild) {
+          host.parentNode.insertBefore(host.firstChild, host);
+        }
+        host.parentNode.removeChild(host);
+      }
+
+      var markedEls = clone.querySelectorAll(".__hs, .__hh, .__hd, .__hm, .__rz_wrap, .__rz_img_host");
+      for (var i = 0; i < markedEls.length; i++) {
+        markedEls[i].classList.remove("__hs");
+        markedEls[i].classList.remove("__hh");
+        markedEls[i].classList.remove("__hd");
+        markedEls[i].classList.remove("__hm");
+        markedEls[i].classList.remove("__rz_wrap");
+        markedEls[i].classList.remove("__rz_img_host");
+      }
+
+      var allEls = clone.querySelectorAll("*");
+      for (var j = 0; j < allEls.length; j++) {
+        if (allEls[j].className === "") allEls[j].removeAttribute("class");
+      }
+
+      return "<!DOCTYPE html>\n" + clone.outerHTML;
+    }
+
+    function saveHistory(reason) {
+      if (historyLock) return;
+      var html = getCurrentDocumentHtml();
+      if (!html) return;
+      if (lastSnapshot === html) return;
+      lastSnapshot = html;
+      redoSnapshot = "";
+    }
+
+    function captureViewState(doc) {
+      if (!doc) return null;
+
+      var state = {
+        scrollX: 0,
+        scrollY: 0,
+        activePageId: "",
+        activeSidebarPage: ""
+      };
+
+      try {
+        var win = doc.defaultView;
+        state.scrollX = win ? (win.scrollX || win.pageXOffset || 0) : 0;
+        state.scrollY = win ? (win.scrollY || win.pageYOffset || 0) : 0;
+      } catch (e) {}
+
+      var activePage = doc.querySelector(".page.active[id]");
+      if (activePage && activePage.id) state.activePageId = activePage.id;
+
+      var activeSidebar = doc.querySelector(".sidebar-item.active[data-page]");
+      if (activeSidebar) state.activeSidebarPage = activeSidebar.getAttribute("data-page") || "";
+
+      return state;
+    }
+
+    function applyViewState(doc, state) {
+      if (!doc || !state) return;
+
+      var targetPageId = state.activePageId || state.activeSidebarPage;
+      if (targetPageId) {
+        var targetNavItem = null;
+        var navItems = doc.querySelectorAll(".sidebar-item[data-page]");
+        for (var n0 = 0; n0 < navItems.length; n0++) {
+          if (navItems[n0].getAttribute("data-page") === targetPageId) {
+            targetNavItem = navItems[n0];
+            break;
+          }
+        }
+
+        if (targetNavItem && typeof targetNavItem.click === "function") {
+          try { targetNavItem.click(); } catch (e) {}
+        }
+
+        var pages = doc.querySelectorAll(".page[id]");
+        var hasTargetPage = !!doc.getElementById(targetPageId);
+        if (pages.length && hasTargetPage) {
+          for (var i = 0; i < pages.length; i++) {
+            var p = pages[i];
+            if (p.id === targetPageId) {
+              p.classList.add("active");
+              p.style.display = "";
+            } else {
+              p.classList.remove("active");
+              p.style.display = "none";
+            }
+          }
+        }
+
+        for (var n = 0; n < navItems.length; n++) {
+          var item = navItems[n];
+          item.classList.toggle("active", item.getAttribute("data-page") === targetPageId);
+        }
+
+        var pageTitleEl = doc.getElementById("pageTitle");
+        if (pageTitleEl) {
+          var activeNav = doc.querySelector(".sidebar-item.active[data-page]");
+          var activeText = activeNav ? (activeNav.textContent || "").trim() : "";
+          if (activeText) pageTitleEl.textContent = activeText;
+        }
+      }
+
+      try {
+        var win = doc.defaultView;
+        if (win) win.scrollTo(state.scrollX || 0, state.scrollY || 0);
+      } catch (e) {}
+    }
+
+    function replayViewStateLater(state, replaySeq) {
+      if (!state) return;
+
+      var delays = [0, 80, 220, 420];
+      for (var i = 0; i < delays.length; i++) {
+        (function(delay) {
+          setTimeout(function() {
+            if (replaySeq !== pendingViewReplaySeq) return;
+            var d = getDoc();
+            if (!d) return;
+            applyViewState(d, state);
+          }, delay);
+        })(delays[i]);
+      }
+    }
+
+    function restoreFromHtml(html) {
+      if (!html) return;
+      pendingViewReplaySeq += 1;
+      pendingViewState = captureViewState(getDoc());
+      historyLock = true;
+      historyApplying = true;
+      suppressNextLoadHistory = true;
+      selEl = null;
+      hovEl = null;
+      selectedEls = [];
+      resizeHandleEl = null;
+      editorHandlersBound = false;
+      iframe.srcdoc = html;
+    }
+
+    function undo() {
+      if (historyApplying) {
+        gi("top-bar").textContent = "Applying previous step, please try again shortly.";
+        return;
+      }
+
+      var currentHtml = getCurrentDocumentHtml();
+      if (!currentHtml) {
+        gi("top-bar").textContent = "Failed to read current page state. Cannot undo.";
+        return;
+      }
+
+      if (!lastSnapshot || lastSnapshot === currentHtml) {
+        gi("top-bar").textContent = "No more actions to undo.";
+        return;
+      }
+
+      redoSnapshot = currentHtml;
+      var prev = lastSnapshot;
+      restoreFromHtml(prev);
+      gi("top-bar").textContent = "Undo applied.";
+    }
+
+    function redo() {
+      if (historyApplying) {
+        gi("top-bar").textContent = "Applying previous step, please try again shortly.";
+        return;
+      }
+
+      var currentHtml = getCurrentDocumentHtml();
+      if (!currentHtml) {
+        gi("top-bar").textContent = "Failed to read current page state. Cannot redo.";
+        return;
+      }
+
+      if (!redoSnapshot || redoSnapshot === currentHtml) {
+        gi("top-bar").textContent = "No actions to redo.";
+        return;
+      }
+
+      lastSnapshot = currentHtml;
+      var next = redoSnapshot;
+      redoSnapshot = "";
+
+      restoreFromHtml(next);
+      gi("top-bar").textContent = "Redo applied.";
+    }
+
+    function captureDragSnapshot(targets) {
+      dragSnapshot = [];
+      for (var i = 0; i < targets.length; i++) {
+        dragSnapshot.push({
+          el: targets[i],
+          tx: getN(targets[i], "data-tx"),
+          ty: getN(targets[i], "data-ty")
+        });
+      }
+    }
+
+    function onHov(e) {
+      if (currentMode !== "edit") return;
+      if (!e.target || e.target === selEl) return;
+      if (e.target.getAttribute && e.target.getAttribute("data-role") === "resize-handle") return;
+      if (hovEl && hovEl !== selEl) hovEl.classList.remove("__hh");
+      if (e.target.tagName === "HTML" || e.target.tagName === "BODY") return;
+      e.target.classList.add("__hh");
+      hovEl = e.target;
+    }
+
+    function onMd(e) {
+      if (currentMode !== "edit") return;
+      if (!selEl || e.target !== selEl) return;
+
+      var targets = getSelectionTargets();
+      if (!targets.length) return;
+
+      saveHistory("drag");
+      dragSyncPrevDx = 0;
+      dragSyncPrevDy = 0;
+
+      dragging = true;
+      didDrag = false;
+      dx0 = e.clientX;
+      dy0 = e.clientY;
+
+      if (groupMoveEnabled && targets.length > 1) {
+        captureDragSnapshot(targets);
+      } else {
+        tx0 = getN(selEl, "data-tx");
+        ty0 = getN(selEl, "data-ty");
+      }
+
+      try { getDoc().body.classList.add("__hd"); } catch (er) {}
+      e.preventDefault();
+    }
+    function onMm(e) {
+      if (currentMode !== "edit") return;
+
+      if (resizing && selEl) {
+        var rdx = (e.clientX - dx0) / previewScale;
+        var rdy = (e.clientY - dy0) / previewScale;
+
+        if (!didResize && Math.abs(rdx) < 2 && Math.abs(rdy) < 2) return;
+        didResize = true;
+
+        var nw = Math.max(10, Math.round(rw0 + rdx));
+        var nh = Math.max(10, Math.round(rh0 + rdy));
+
+        applyElementSize(selEl, nw, nh);
+
+        if (gi("sW")) gi("sW").value = nw;
+        if (gi("sH")) gi("sH").value = nh;
+
+        noFill = true;
+        clearTimeout(window.__t2);
+        window.__t2 = setTimeout(function(){ noFill = false; }, 200);
+
+        refreshResizeHandle();
+        updateCanvasHeightByContent();
+        if (zoomMode === "fit") fitReportToViewport();
+        return;
+      }
+
+      if (!dragging || !selEl) return;
+
+      var ddx = (e.clientX - dx0) / previewScale;
+      var ddy = (e.clientY - dy0) / previewScale;
+      if (!didDrag && Math.abs(ddx) < 3 && Math.abs(ddy) < 3) return;
+      didDrag = true;
+
+      var syncDx = ddx - dragSyncPrevDx;
+      var syncDy = ddy - dragSyncPrevDy;
+      dragSyncPrevDx = ddx;
+      dragSyncPrevDy = ddy;
+
+      if (groupMoveEnabled && selectedEls.length > 1) {
+        for (var i = 0; i < dragSnapshot.length; i++) {
+          var item = dragSnapshot[i];
+          item.el.setAttribute("data-tx", Math.round(item.tx + ddx));
+          item.el.setAttribute("data-ty", Math.round(item.ty + ddy));
+          applyTf(item.el);
+        }
+        applySyncMoveFromSource(selEl, syncDx, syncDy);
+        noFill = true;
+        gi("sTx").value = getN(selEl, "data-tx");
+        gi("sTy").value = getN(selEl, "data-ty");
+        clearTimeout(window.__t);
+        window.__t = setTimeout(function(){ noFill = false; }, 200);
+        refreshResizeHandle();
+        return;
+      }
+
+      var ntx = Math.round(tx0 + ddx);
+      var nty = Math.round(ty0 + ddy);
+      selEl.setAttribute("data-tx", ntx);
+      selEl.setAttribute("data-ty", nty);
+      applyTf(selEl);
+      applySyncMoveFromSource(selEl, syncDx, syncDy);
+
+      noFill = true;
+      gi("sTx").value = ntx;
+      gi("sTy").value = nty;
+      clearTimeout(window.__t);
+      window.__t = setTimeout(function(){ noFill = false; }, 200);
+      refreshResizeHandle();
+    }
+
+    function onMu() {
+      var resizedNow = resizing && didResize;
+      var draggedNow = dragging && didDrag;
+
+      resizing = false;
+      didResize = false;
+      dragging = false;
+      dragSyncPrevDx = 0;
+      dragSyncPrevDy = 0;
+
+      try { getDoc().body.classList.remove("__hd"); } catch (er) {}
+
+      // 仅拖拽Position时不重算画布Size，避免画布被位移元素意外撑高/改变
+      if (resizedNow || !draggedNow) {
+        updateCanvasHeightByContent();
+      }
+      if (zoomMode === "fit") fitReportToViewport();
+      refreshResizeHandle();
+    }
+
+    function fillPanel() {
+      if (!selEl) return;
+      refreshResizeHandle();
+      gi("spTip").style.display = "none";
+      gi("spMain").style.display = "";
+
+      var cs = getComputedStyle(selEl);
+      var s = selEl.style;
+      noFill = true;
+
+      gi("sTx").value = getN(selEl, "data-tx");
+      gi("sTy").value = getN(selEl, "data-ty");
+
+      var rect = selEl.getBoundingClientRect();
+      if (gi("sW")) gi("sW").value = px(s.width) || Math.round(rect.width / previewScale) || Math.round(rect.width);
+      if (gi("sH")) gi("sH").value = px(s.height) || Math.round(rect.height / previewScale) || Math.round(rect.height);
+
+      gi("sFont").value = s.fontFamily || "";
+
+      var fs = parseInt(s.fontSize || cs.fontSize, 10) || 16;
+      gi("sFsr").value = fs;
+      gi("sFsn").value = fs;
+
+      var col = toHex(cs.color) || "#000000";
+      gi("sColor").value = col;
+      gi("sColorV").textContent = col;
+
+      var fw = cs.fontWeight;
+      var isBold = (parseInt(fw, 10) >= 600 || fw === "bold");
+      gi("sBold").className = isBold ? "sp-btn on" : "sp-btn";
+      gi("sItalic").className = cs.fontStyle === "italic" ? "sp-btn on" : "sp-btn";
+      gi("sUnder").className = cs.textDecoration.indexOf("underline") > -1 ? "sp-btn on" : "sp-btn";
+      gi("sStrike").className = cs.textDecoration.indexOf("line-through") > -1 ? "sp-btn on" : "sp-btn";
+
+      var lhpx = parseFloat(cs.lineHeight);
+      var fspx = parseFloat(cs.fontSize) || 16;
+      var lhr = isNaN(lhpx) ? 1.5 : Math.round((lhpx / fspx) * 10) / 10;
+      gi("sLh").value = lhr;
+      gi("sLhV").textContent = lhr;
+
+      var bg = toHex(cs.backgroundColor) || "#ffffff";
+      gi("sBg").value = bg;
+      gi("sBgV").textContent = bg;
+
+      var op = parseFloat(cs.opacity);
+      if (isNaN(op)) op = 1;
+      gi("sOp").value = op;
+      gi("sOpV").textContent = Math.round(op * 100) + "%";
+
+      gi("sBr").value = px(s.borderRadius || cs.borderRadius);
+      gi("sBrV").textContent = gi("sBr").value + "px";
+
+      gi("sBw").value = px(s.borderWidth || cs.borderWidth);
+      gi("sBwV").textContent = gi("sBw").value + "px";
+
+      gi("sBc").value = toHex(cs.borderColor) || "#cccccc";
+      gi("sBs").value = (!cs.borderStyle || cs.borderStyle === "none") ? "solid" : cs.borderStyle;
+
+      gi("sPt").value = px(cs.paddingTop);
+      gi("sPb").value = px(cs.paddingBottom);
+      gi("sPl").value = px(cs.paddingLeft);
+      gi("sPr").value = px(cs.paddingRight);
+      gi("sMt").value = px(cs.marginTop);
+      gi("sMb").value = px(cs.marginBottom);
+
+      gi("sRot").value = getN(selEl, "data-rot");
+      gi("sRotV").textContent = gi("sRot").value;
+
+      var scv = selEl.getAttribute("data-sc") ? parseFloat(selEl.getAttribute("data-sc")) : 1;
+      gi("sSc").value = scv;
+      gi("sScV").textContent = scv.toFixed(2);
+
+      setTimeout(function(){ noFill = false; }, 80);
+    }
+
+    function selectFromClick(el, withShift) {
+      if (!el || el.tagName === "HTML" || el.tagName === "BODY") return;
+      if (withShift) toggleMultiSelect(el);
+      else selectSingle(el);
+    }
+
+    function onClk(e) {
+      if (currentMode !== "edit") return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.target && e.target.getAttribute && e.target.getAttribute("data-role") === "resize-handle") {
+        return;
+      }
+
+      if (didDrag) {
+        didDrag = false;
+        return;
+      }
+
+      if (didResize) {
+        didResize = false;
+        return;
+      }
+
+      if (!e.target || e.target.tagName === "HTML" || e.target.tagName === "BODY") return;
+      selectFromClick(e.target, e.shiftKey);
+    }
+
+    function onDblClk(e) {
+      if (currentMode !== "edit") return;
+      e.preventDefault();
+      e.stopPropagation();
+      var el = e.target;
+      if (!el || el.tagName === "HTML" || el.tagName === "BODY") return;
+      if (el.getAttribute && el.getAttribute("data-role") === "resize-handle") return;
+
+      selectSingle(el);
+
+      if (!resolveEditableTextElement(el)) {
+        gi("top-bar").textContent = "Current element is not suitable for direct text editing.";
+        return;
+      }
+      var current = getEditableText(el);
+      var next = prompt("Enter new text content:", current);
+      if (next === null) return;
+
+      saveHistory("dblclickText");
+      applyEditableText(el, next);
+      refreshTextEditor();
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+      gi("top-bar").textContent = "Text content updated.";
+    }
+
+    function alignSelection(mode) {
+      var targets = getSelectionTargets();
+      if (targets.length < 2) {
+        gi("top-bar").textContent = "Please select at least two elements before aligning.";
+        return;
+      }
+
+      saveHistory("align:" + mode);
+
+      var rects = [];
+      for (var i = 0; i < targets.length; i++) {
+        rects.push({ el: targets[i], rect: targets[i].getBoundingClientRect() });
+      }
+
+      var minL = Math.min.apply(null, rects.map(function(x){ return x.rect.left; }));
+      var maxR = Math.max.apply(null, rects.map(function(x){ return x.rect.right; }));
+      var minT = Math.min.apply(null, rects.map(function(x){ return x.rect.top; }));
+      var maxB = Math.max.apply(null, rects.map(function(x){ return x.rect.bottom; }));
+      var centerX = (minL + maxR) / 2;
+      var centerY = (minT + maxB) / 2;
+
+      for (var j = 0; j < rects.length; j++) {
+        var item = rects[j];
+        var el = item.el;
+        var r = item.rect;
+        var tx = getN(el, "data-tx");
+        var ty = getN(el, "data-ty");
+        var dx = 0, dy = 0;
+
+        if (mode === "left") dx = (minL - r.left) / previewScale;
+        if (mode === "hcenter") dx = (centerX - (r.left + r.width / 2)) / previewScale;
+        if (mode === "right") dx = (maxR - r.right) / previewScale;
+
+        if (mode === "top") dy = (minT - r.top) / previewScale;
+        if (mode === "vcenter") dy = (centerY - (r.top + r.height / 2)) / previewScale;
+        if (mode === "bottom") dy = (maxB - r.bottom) / previewScale;
+
+        if (dx) el.setAttribute("data-tx", Math.round(tx + dx));
+        if (dy) el.setAttribute("data-ty", Math.round(ty + dy));
+        applyTf(el);
+      }
+
+      fillPanel();
+      refreshResizeHandle();
+      gi("top-bar").textContent = "Alignment completed: " + mode;
+    }
+
+    function duplicateNode() {
+      if (!selEl || !selEl.parentNode) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return;
+      }
+      saveHistory("duplicateNode");
+      var clone = selEl.cloneNode(true);
+
+      var oldHandle = clone.querySelector("[data-role='resize-handle']");
+      if (oldHandle && oldHandle.parentNode) oldHandle.parentNode.removeChild(oldHandle);
+      clone.classList.remove("__rz_wrap", "__hs", "__hh", "__hd", "__hm");
+
+      var tx = getN(selEl, "data-tx");
+      var ty = getN(selEl, "data-ty");
+      clone.setAttribute("data-tx", tx + 20);
+      clone.setAttribute("data-ty", ty + 20);
+      applyTf(clone);
+      selEl.parentNode.insertBefore(clone, selEl.nextSibling);
+      selectSingle(clone);
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+      gi("top-bar").textContent = "Element duplicated.";
+    }
+
+    function deleteNode() {
+      if (!selEl || !selEl.parentNode) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return;
+      }
+      if (!confirm("Are you sure you want to delete the current selected element?")) return;
+      saveHistory("deleteNode");
+      removeResizeHandle();
+
+      var parent = selEl.parentNode;
+      var next = selEl.nextElementSibling || selEl.previousElementSibling;
+
+      for (var i = 0; i < selectedEls.length; i++) {
+        if (selectedEls[i] && selectedEls[i].parentNode) {
+          selectedEls[i].parentNode.removeChild(selectedEls[i]);
+        }
+      }
+      selectedEls = [];
+      selEl = null;
+
+      if (next && next !== parent) selectSingle(next);
+      else clearSelection();
+
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+      gi("top-bar").textContent = "Element deleted.";
+    }
+
+    function applyImageSrc(src) {
+      if (!selEl || !selEl.tagName || selEl.tagName.toLowerCase() !== "img") {
+        gi("top-bar").textContent = "Please select an img element first.";
+        return;
+      }
+      saveHistory("imageSrc");
+      selEl.setAttribute("src", src);
+      refreshImageEditor();
+      refreshResizeHandle();
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+      gi("top-bar").textContent = "Image URL updated.";
+    }
+
+    function selectParentNode() {
+      if (!selEl) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return;
+      }
+
+      var base = selEl;
+      if (base.parentNode && base.parentNode.classList && base.parentNode.classList.contains("__rz_img_host")) {
+        base = base.parentNode;
+      }
+
+      var parent = base.parentNode;
+      if (parent && parent.tagName && parent.tagName !== "BODY" && parent.tagName !== "HTML") {
+        var doc = getDoc();
+        var blocked = false;
+        try {
+          var rect = parent.getBoundingClientRect();
+          var vw = Math.max(1, doc.documentElement.clientWidth || 0);
+          var vh = Math.max(1, doc.documentElement.clientHeight || 0);
+          blocked = rect.width >= vw * 0.96 && rect.height >= vh * 0.96;
+        } catch (e) {}
+
+        if (blocked) {
+          gi("top-bar").textContent = "Reached upper parent navigation limit.";
+          return;
+        }
+
+        selectSingle(parent);
+        gi("top-bar").textContent = "Selected parent node: " + parent.tagName.toLowerCase();
+      } else {
+        gi("top-bar").textContent = "Already at top level; cannot move to a higher parent.";
+      }
+    }
+
+    function selectSiblingNode(step) {
+      if (!selEl) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return;
+      }
+
+      var base = selEl;
+      if (base.parentNode && base.parentNode.classList && base.parentNode.classList.contains("__rz_img_host")) {
+        base = base.parentNode;
+      }
+
+      var parent = base.parentElement;
+      if (!parent) {
+        gi("top-bar").textContent = "Current element has no switchable sibling nodes.";
+        return;
+      }
+
+      var siblings = [];
+      var kids = parent.children;
+      for (var i = 0; i < kids.length; i++) {
+        var node = kids[i];
+        if (!node || node.getAttribute("data-role") === "resize-handle") continue;
+        siblings.push(node);
+      }
+
+      if (siblings.length < 2) {
+        gi("top-bar").textContent = "No switchable sibling nodes at current level.";
+        return;
+      }
+
+      var curIdx = siblings.indexOf(base);
+      if (curIdx < 0) curIdx = siblings.indexOf(selEl);
+      if (curIdx < 0) {
+        gi("top-bar").textContent = "Could not locate current sibling position.";
+        return;
+      }
+
+      var nextIdx = (curIdx + (step >= 0 ? 1 : -1) + siblings.length) % siblings.length;
+      var next = siblings[nextIdx];
+
+      if (next && next.classList && next.classList.contains("__rz_img_host")) {
+        var wrappedImg = next.querySelector("img");
+        if (wrappedImg) next = wrappedImg;
+      }
+
+      selectSingle(next);
+      gi("top-bar").textContent = "Switched to sibling " + (step >= 0 ? "next" : "previous") + " node.";
+    }
+
+    function selectChildNode() {
+      if (!selEl) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return;
+      }
+
+      var base = selEl;
+      if (base.parentNode && base.parentNode.classList && base.parentNode.classList.contains("__rz_img_host")) {
+        base = base.parentNode;
+      }
+
+      var children = base.children;
+      if (!children || !children.length) {
+        gi("top-bar").textContent = "Current element has no selectable child nodes.";
+        return;
+      }
+
+      var next = null;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (!child || child.getAttribute("data-role") === "resize-handle") continue;
+        if (child.classList && child.classList.contains("__rz_img_host")) {
+          var wrappedImg = child.querySelector("img");
+          next = wrappedImg || child;
+          break;
+        }
+        next = child;
+        break;
+      }
+
+      if (!next) {
+        gi("top-bar").textContent = "Current element has no selectable child nodes.";
+        return;
+      }
+
+      selectSingle(next);
+      gi("top-bar").textContent = "Selected child node.";
+    }
+
+    function exportEditedHtml() {
+      try {
+        var htmlText = getCurrentDocumentHtml();
+        if (!htmlText) {
+          alert("No exportable content found");
+          return;
+        }
+
+        var defaultName = currentFileName.replace(/\.html?$/i, "") + "_edited.html";
+        var inputName = prompt("Enter export filename (optional .html):", defaultName);
+        if (inputName === null) {
+          gi("top-bar").textContent = "Export canceled.";
+          return;
+        }
+
+        var exportName = (inputName || "").trim();
+        if (!exportName) exportName = defaultName;
+        exportName = exportName.replace(/[\\/:*?"<>|]+/g, "_");
+        if (!/\.html?$/i.test(exportName)) exportName += ".html";
+
+        var blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = exportName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        gi("top-bar").textContent = "Export successful: " + exportName;
+      } catch (err) {
+        console.error(err);
+        alert("Export failed: " + err.message);
+      }
+    }
+
+    function saveDraftToLocal() {
+      try {
+        var htmlText = getCurrentDocumentHtml();
+        if (!htmlText) {
+          gi("top-bar").textContent = "No content available to save.";
+          return;
+        }
+        localStorage.setItem("html-editor-draft", htmlText);
+        localStorage.setItem("html-editor-draft-name", currentFileName || "edited.html");
+        gi("top-bar").textContent = "Draft saved to local browser storage.";
+      } catch (err) {
+        console.log(err);
+        gi("top-bar").textContent = "Failed to save draft.";
+      }
+    }
+
+    function showHeaderHelp() {
+      var modal = gi("help-modal");
+      if (!modal) return;
+      modal.style.display = "flex";
+    }
+
+    function closeHeaderHelp() {
+      var modal = gi("help-modal");
+      if (!modal) return;
+      modal.style.display = "none";
+    }
+
+    var currentLanguage = "en";
+
+    var editorTranslations = {
+      en: {
+        title: "HTML Editor",
+        editMode: "Edit Mode",
+        liveView: "Live View",
+        modeHintEdit: "Edit Mode: drag, align, edit text, and adjust styles without triggering original page interactions.",
+        modeHintLive: "Live View: preview the page as end users would browse it.",
+        export: "Export",
+        showProperties: "Show Properties",
+        hideProperties: "Hide Properties",
+        help: "Help",
+        fileActions: "File Actions",
+        importFile: "Import HTML File",
+        importCode: "Import HTML Code",
+        reset: "Reset Page",
+        mode: "Mode",
+        multiSelect: "Multi-Select & Align",
+        clearSelection: "Clear Selection",
+        groupMove: "Group Move: ",
+        align: ["Align Left", "Align H-Center", "Align Right", "Align Top", "Align V-Center", "Align Bottom"],
+        sync: "Sync",
+        addSync: "Add to Sync Stack",
+        removeCurrent: "Remove Current",
+        clearSync: "Clear Sync Stack",
+        undoRedo: "Undo / Redo",
+        undo: "Undo",
+        redo: "Redo",
+        selectedElement: "Selected Element",
+        properties: "Properties Panel",
+        textContent: "Text Content",
+        applyText: "Apply Text",
+        image: "Image",
+        imageUrl: "Image URL",
+        applyImageUrl: "Apply Image URL",
+        localImage: "Replace with Local Image",
+        nodeActions: "Node Actions",
+        selectParent: "Select Parent Node (Alt+Up)",
+        duplicate: "Duplicate Element",
+        delete: "Delete Element",
+        position: "Position",
+        resetPosition: "Reset Position",
+        size: "Size",
+        restoreSize: "Restore Auto Size",
+        textStyle: "Text Style",
+        background: "Background",
+        border: "Border",
+        spacing: "Spacing (px)",
+        transform: "Transform",
+        selectedCount: "Selected: ",
+        syncEmpty: "Sync stack is empty. Select an element, then click \"Add to Sync Stack\".",
+        syncType: "Type: ",
+        textHelpEmpty: "Please select an editable text element.",
+        textHelpOk: "Press Enter to apply. Use Shift+Enter for a new line. You can also double-click text on the canvas.",
+        textHelpWarn: "This element is not suitable for direct text editing. Please select a more specific text element.",
+        imageHelpEmpty: "Please select an img element to edit.",
+        imageHelpOk: "Current element is an image. You can edit the URL or replace it with a local image.",
+        imageHelpWarn: "Current element is not an img.",
+        propertyTip: "Click an element to start editing",
+        textPlaceholder: "Editable text content appears here",
+        imagePlaceholder: "Select an img element to edit src",
+        draggable: "Draggable",
+        resizeDraggable: "Bottom-right corner draggable",
+        font: "Font",
+        fontSize: "Font Size",
+        color: "Color",
+        style: "Style",
+        lineHeight: "Line Height",
+        opacity: "Opacity",
+        radius: "Radius",
+        thickness: "Thickness",
+        solid: "Solid",
+        dashed: "Dashed",
+        dotted: "Dotted",
+        padTop: "Pad Top",
+        padBottom: "Pad Bottom",
+        padLeft: "Pad Left",
+        padRight: "Pad Right",
+        marginTop: "Margin Top",
+        marginBottom: "Margin Bottom",
+        rotate: "Rotate",
+        scale: "Scale",
+        zoom: "Zoom",
+        canvas: "Canvas",
+        fit: "Fit",
+        defaultCanvas: "Default",
+        zoomStatus: "Zoom: ",
+        canvasStatus: "Canvas: ",
+        defaultFont: "Default",
+        guide: "Editor Guide",
+        guideSubtitle: "Follow the steps below to complete element selection, style editing, and page export faster.",
+        gotIt: "Got it",
+        guideSections: [
+          {
+            title: "1. Basic Workflow",
+            items: [
+              "Import an HTML file first, or click \"Import HTML Code\".",
+              "Switch to \"Edit Mode\", then click page elements to start editing.",
+              "After editing, click \"Export\" at the top to save the result."
+            ]
+          },
+          {
+            title: "2. Selection & Navigation",
+            items: [
+              "<span class=\"help-key\">W</span> Move to parent node, <span class=\"help-key\">S</span> move to child node.",
+              "<span class=\"help-key\">A</span>/<span class=\"help-key\">D</span> Switch between sibling nodes.",
+              "<span class=\"help-key\">Esc</span> Also move to parent node.",
+              "<span class=\"help-key\">Tab</span>/<span class=\"help-key\">Shift+Tab</span> Move to previous/next sibling."
+            ]
+          },
+          {
+            title: "3. Editing",
+            items: [
+              "Drag elements to change position; drag the bottom-right handle to resize.",
+              "Use the right properties panel to adjust font, color, border, spacing, and transform.",
+              "Double-click a text element for quick text editing. In the text box, press <span class=\"help-key\">Enter</span> to apply, or <span class=\"help-key\">Shift+Enter</span> for a new line."
+            ]
+          },
+          {
+            title: "4. Shortcuts",
+            items: [
+              "<span class=\"help-key\">Ctrl/Cmd+Z</span> Undo, <span class=\"help-key\">Ctrl/Cmd+Y</span> Redo.",
+              "<span class=\"help-key\">Ctrl/Cmd+C</span> Duplicate selected elements.",
+              "<span class=\"help-key\">Ctrl/Cmd+D</span> Delete selected elements.",
+              "<span class=\"help-key\">Enter</span> Apply text box content (<span class=\"help-key\">Shift+Enter</span> for a new line)."
+            ]
+          },
+          {
+            title: "5. Sync",
+            items: [
+              "Select an element first, then click <span class=\"help-key\">Add to Sync Stack</span>.",
+              "Then select another element of the same type elsewhere on the page (for example, both img or both div) and add it.",
+              "When the sync stack has at least 2 elements, drag, arrow keys, and X/Y input will move them in sync. You can also align them left / right / top / bottom.",
+              "<span class=\"help-key\">Remove Current</span> removes a single element, and <span class=\"help-key\">Clear Sync Stack</span> resets the whole stack."
+            ]
+          }
+        ]
+      },
+      zh: {
+        title: "HTML 编辑器",
+        editMode: "编辑模式",
+        liveView: "浏览效果",
+        modeHintEdit: "编辑模式：可拖动、对齐、修改文字和样式，不触发原页面交互。",
+        modeHintLive: "浏览效果：以终端用户浏览页面的方式预览。",
+        export: "导出",
+        showProperties: "显示属性编辑",
+        hideProperties: "隐藏属性编辑",
+        help: "说明",
+        fileActions: "文件操作",
+        importFile: "导入 HTML 文件",
+        importCode: "直接导入 HTML 代码",
+        reset: "重置页面",
+        mode: "工作模式",
+        multiSelect: "多选与对齐",
+        clearSelection: "清空选择",
+        groupMove: "组移动：",
+        align: ["左对齐", "水平居中", "右对齐", "顶对齐", "垂直居中", "底对齐"],
+        sync: "同步",
+        addSync: "加入同步栈",
+        removeCurrent: "移除当前",
+        clearSync: "清空同步栈",
+        undoRedo: "撤销 / 重做",
+        undo: "撤销",
+        redo: "重做",
+        selectedElement: "选中元素",
+        properties: "属性编辑器",
+        textContent: "文本内容",
+        applyText: "应用文本修改",
+        image: "图片",
+        imageUrl: "图片地址",
+        applyImageUrl: "应用图片地址",
+        localImage: "本地替换图片",
+        nodeActions: "节点操作",
+        selectParent: "选择父节点 (Alt+↑)",
+        duplicate: "复制元素",
+        delete: "删除元素",
+        position: "位置",
+        resetPosition: "重置位置",
+        size: "尺寸",
+        restoreSize: "恢复自动尺寸",
+        textStyle: "文字样式",
+        background: "背景",
+        border: "边框",
+        spacing: "间距 (px)",
+        transform: "变形",
+        selectedCount: "已选元素：",
+        syncEmpty: "同步栈为空。先选中元素后点击“加入同步栈”。",
+        syncType: "类型：",
+        textHelpEmpty: "请选择可编辑文字元素。",
+        textHelpOk: "按 Enter 即可应用修改；Shift+Enter 换行。也可在画布上双击文本快速修改。",
+        textHelpWarn: "当前元素不适合直接编辑文本，请选择更具体的文字元素。",
+        imageHelpEmpty: "请选择 img 元素进行编辑。",
+        imageHelpOk: "当前为图片元素，可修改地址或替换本地图片。",
+        imageHelpWarn: "当前元素不是 img。",
+        propertyTip: "点击元素开始编辑",
+        textPlaceholder: "可编辑文本内容会显示在这里",
+        imagePlaceholder: "选中 img 后可修改 src",
+        draggable: "可拖拽",
+        resizeDraggable: "右下角可拖拽",
+        font: "字体",
+        fontSize: "字号",
+        color: "颜色",
+        style: "样式",
+        lineHeight: "行高",
+        opacity: "透明度",
+        radius: "圆角",
+        thickness: "粗细",
+        solid: "实线",
+        dashed: "虚线",
+        dotted: "点线",
+        padTop: "内上",
+        padBottom: "内下",
+        padLeft: "内左",
+        padRight: "内右",
+        marginTop: "外上",
+        marginBottom: "外下",
+        rotate: "旋转",
+        scale: "缩放",
+        zoom: "缩放",
+        canvas: "画布",
+        fit: "适应",
+        defaultCanvas: "默认",
+        zoomStatus: "缩放：",
+        canvasStatus: "画布：",
+        defaultFont: "默认",
+        guide: "编辑器使用说明",
+        guideSubtitle: "按照以下步骤，可以更快完成元素选择、样式编辑和页面导出。",
+        gotIt: "我知道了",
+        guideSections: [
+          {
+            title: "1. 基本流程",
+            items: [
+              "先导入 HTML 文件，或点击「直接导入 HTML 代码」。",
+              "切换到「编辑模式」，点击页面元素开始编辑。",
+              "编辑完成后，点击顶部「导出」保存结果。"
+            ]
+          },
+          {
+            title: "2. 选择与导航",
+            items: [
+              "<span class=\"help-key\">W</span> 选中父节点，<span class=\"help-key\">S</span> 选中子节点。",
+              "<span class=\"help-key\">A</span>/<span class=\"help-key\">D</span> 切换兄弟节点。",
+              "<span class=\"help-key\">Esc</span> 也可选中父节点。",
+              "<span class=\"help-key\">Tab</span>/<span class=\"help-key\">Shift+Tab</span> 切换到上一个 / 下一个兄弟节点。"
+            ]
+          },
+          {
+            title: "3. 编辑操作",
+            items: [
+              "拖动元素改变位置；拖动右下角手柄调整尺寸。",
+              "使用右侧属性面板调整字体、颜色、边框、间距和变形。",
+              "双击文本可快速修改。属性栏文本框中按 <span class=\"help-key\">Enter</span> 应用，<span class=\"help-key\">Shift+Enter</span> 换行。"
+            ]
+          },
+          {
+            title: "4. 快捷键",
+            items: [
+              "<span class=\"help-key\">Ctrl/Cmd+Z</span> 撤销，<span class=\"help-key\">Ctrl/Cmd+Y</span> 重做。",
+              "<span class=\"help-key\">Ctrl/Cmd+C</span> 复制选中元素。",
+              "<span class=\"help-key\">Ctrl/Cmd+D</span> 删除选中元素。",
+              "<span class=\"help-key\">Enter</span> 应用文本框内容（<span class=\"help-key\">Shift+Enter</span> 换行）。"
+            ]
+          },
+          {
+            title: "5. 同步栈",
+            items: [
+              "先选中元素，再点击 <span class=\"help-key\">加入同步栈</span>。",
+              "再到页面其他位置选中同类型元素并加入（例如都是 img，或都是 div）。",
+              "同步栈中至少有 2 个元素后，拖拽、方向键和 X/Y 输入会联动移动；也可配合左右上下对齐统一排版。",
+              "<span class=\"help-key\">移除当前</span> 可移除单个元素，<span class=\"help-key\">清空同步栈</span> 清空整个栈。"
+            ]
+          }
+        ]
+      }
+    };
+
+    function updateHelpGuideLanguage(copy) {
+      var cards = document.querySelectorAll(".help-grid .help-card");
+      var sections = (copy && copy.guideSections) || [];
+      for (var i = 0; i < cards.length; i++) {
+        if (!sections[i]) break;
+        var h3 = cards[i].querySelector("h3");
+        var list = cards[i].querySelector(".help-list");
+        if (h3) h3.textContent = sections[i].title || "";
+        if (!list) continue;
+        var items = sections[i].items || [];
+        list.innerHTML = "";
+        for (var j = 0; j < items.length; j++) {
+          var li = document.createElement("li");
+          li.innerHTML = items[j];
+          list.appendChild(li);
+        }
+      }
+    }
+
+    function setText(id, value) {
+      var el = gi(id);
+      if (el && value != null) el.textContent = value;
+    }
+
+    function setSidebarTitle(index, value) {
+      var titles = document.querySelectorAll(".editor-sidebar .sidebar-title");
+      if (titles[index] && value != null) titles[index].textContent = value;
+    }
+
+    function setDirectChildText(el, value) {
+      if (!el || value == null) return;
+      for (var i = 0; i < el.childNodes.length; i++) {
+        if (el.childNodes[i].nodeType === 3) {
+          el.childNodes[i].nodeValue = value;
+          return;
+        }
+      }
+      el.insertBefore(document.createTextNode(value), el.firstChild);
+    }
+
+    function updatePropertyPanelLanguage(copy) {
+      setText("spTip", copy.propertyTip);
+      gi("sText").placeholder = copy.textPlaceholder;
+      gi("sImgSrc").placeholder = copy.imagePlaceholder;
+
+      var sections = document.querySelectorAll(".editor-style-panel .sp-section");
+      if (sections.length < 10) return;
+
+      var sectionTitles = [copy.textContent, copy.image, copy.nodeActions, copy.position, copy.size, copy.textStyle, copy.background, copy.border, copy.spacing, copy.transform];
+      for (var i = 0; i < sectionTitles.length; i++) {
+        var title = sections[i].querySelector(".sp-label");
+        if (title) setDirectChildText(title, sectionTitles[i]);
+      }
+
+      var positionTip = sections[3].querySelector(".drag-tip");
+      var sizeTip = sections[4].querySelector(".drag-tip");
+      if (positionTip) positionTip.textContent = copy.draggable;
+      if (sizeTip) sizeTip.textContent = copy.resizeDraggable;
+
+      var textStyleLabels = sections[5].querySelectorAll(".sp-row > label");
+      var textStyleCopy = [copy.font, copy.fontSize, copy.color, copy.style, copy.lineHeight];
+      for (var j = 0; j < textStyleLabels.length; j++) setTextNode(textStyleLabels[j], textStyleCopy[j]);
+
+      var backgroundLabels = sections[6].querySelectorAll(".sp-row > label");
+      setTextNode(backgroundLabels[0], copy.color);
+      setTextNode(backgroundLabels[1], copy.opacity);
+
+      var borderLabels = sections[7].querySelectorAll(".sp-row > label");
+      setTextNode(borderLabels[0], copy.radius);
+      setTextNode(borderLabels[1], copy.thickness);
+      setTextNode(borderLabels[2], copy.color);
+      var borderOptions = gi("sBs").options;
+      borderOptions[0].text = copy.solid;
+      borderOptions[1].text = copy.dashed;
+      borderOptions[2].text = copy.dotted;
+
+      var spacingLabels = sections[8].querySelectorAll(".sp-cell > label");
+      var spacingCopy = [copy.padTop, copy.padBottom, copy.padLeft, copy.padRight, copy.marginTop, copy.marginBottom];
+      for (var k = 0; k < spacingLabels.length; k++) setTextNode(spacingLabels[k], spacingCopy[k]);
+
+      var transformLabels = sections[9].querySelectorAll(".sp-row > label");
+      setTextNode(transformLabels[0], copy.rotate);
+      setTextNode(transformLabels[1], copy.scale);
+      var fontOptions = gi("sFont").options;
+      if (fontOptions[0]) fontOptions[0].text = copy.defaultFont;
+
+      var imageLabel = gi("sImgSrc").previousElementSibling;
+      if (imageLabel && imageLabel.tagName === "LABEL") imageLabel.textContent = copy.imageUrl;
+    }
+
+    function setTextNode(el, value) {
+      if (el && value != null) el.textContent = value;
+    }
+
+    function updateModeCopy() {
+      var copy = editorTranslations[currentLanguage];
+      var isEdit = currentMode === "edit";
+      var text = isEdit ? copy.modeHintEdit : copy.modeHintLive;
+      setText("header-mode-text", text);
+      setText("mode-hint", text);
+      var groupBtn = gi("btn-group-move-toggle");
+      if (groupBtn) groupBtn.textContent = copy.groupMove + (groupMoveEnabled ? (currentLanguage === "zh" ? "开" : "On") : (currentLanguage === "zh" ? "关" : "Off"));
+    }
+
+    function updateEditorLanguage(lang) {
+      currentLanguage = lang === "zh" ? "zh" : "en";
+      var copy = editorTranslations[currentLanguage];
+      document.documentElement.lang = currentLanguage === "zh" ? "zh-CN" : "en";
+      document.title = copy.title;
+      setText("header-mode-text", currentMode === "edit" ? copy.modeHintEdit : copy.modeHintLive);
+      setText("btn-header-export", copy.export);
+      setText("btn-toggle-style-panel", stylePanelVisible ? copy.hideProperties : copy.showProperties);
+      setText("btn-header-help", copy.help);
+      setSidebarTitle(0, copy.fileActions);
+      setSidebarTitle(1, copy.mode);
+      setSidebarTitle(2, copy.multiSelect);
+      setSidebarTitle(3, copy.sync);
+      setSidebarTitle(4, copy.undoRedo);
+      setSidebarTitle(5, copy.selectedElement);
+      setText("btn-import-code", copy.importCode);
+      setText("btn-reset", copy.reset);
+      var uploadText = document.querySelector(".file-upload-btn");
+      if (uploadText) uploadText.textContent = copy.importFile;
+      setText("btn-mode-edit", copy.editMode);
+      setText("btn-mode-live", copy.liveView);
+      setText("btn-clear-selection", copy.clearSelection);
+      updateModeCopy();
+      var alignIds = ["btn-align-left", "btn-align-hcenter", "btn-align-right", "btn-align-top", "btn-align-vcenter", "btn-align-bottom"];
+      for (var i = 0; i < alignIds.length; i++) setText(alignIds[i], copy.align[i]);
+      setText("btn-sync-add", copy.addSync);
+      setText("btn-sync-remove", copy.removeCurrent);
+      setText("btn-sync-clear", copy.clearSync);
+      setText("btn-undo", copy.undo);
+      setText("btn-redo", copy.redo);
+      var toolbarLabels = document.querySelectorAll(".toolbar-label");
+      if (toolbarLabels[0]) toolbarLabels[0].textContent = copy.zoom + ":";
+      if (toolbarLabels[1]) toolbarLabels[1].textContent = copy.canvas + ":";
+      setText("zoom-fit", copy.fit);
+      setText("canvas-default", copy.defaultCanvas);
+      var tagBox = gi("tag-display");
+      if (tagBox && !selEl) tagBox.innerHTML = '<span style="color:#ccc">' + (currentLanguage === "zh" ? "未选中" : "None") + "</span>";
+      var spHeader = document.querySelector(".sp-hd");
+      if (spHeader) spHeader.textContent = copy.properties;
+      setText("btn-apply-text", copy.applyText);
+      setText("btn-apply-img", copy.applyImageUrl);
+      setText("btn-pick-img", copy.localImage);
+      setText("btn-select-parent", copy.selectParent);
+      setText("btn-duplicate-node", copy.duplicate);
+      setText("btn-delete-node", copy.delete);
+      setText("sPosRst", copy.resetPosition);
+      setText("sSizeRst", copy.restoreSize);
+      updatePropertyPanelLanguage(copy);
+      applyReportScale(previewScale, zoomMode === "fit" ? copy.fit : Math.round(previewScale * 100) + "%");
+      updateSelectionCount();
+      refreshTextEditor();
+      refreshImageEditor();
+      var helpTitle = document.querySelector(".help-title");
+      var helpSubtitle = document.querySelector(".help-subtitle");
+      if (helpTitle) helpTitle.textContent = copy.guide;
+      if (helpSubtitle) helpSubtitle.textContent = copy.guideSubtitle;
+      updateHelpGuideLanguage(copy);
+      setText("btn-help-close", copy.gotIt);
+      var languageToggle = gi("language-toggle");
+      if (languageToggle) languageToggle.setAttribute("aria-pressed", currentLanguage === "zh" ? "true" : "false");
+      var languageLabels = document.querySelectorAll(".language-toggle-label");
+      for (var i = 0; i < languageLabels.length; i++) {
+        languageLabels[i].classList.toggle("active", languageLabels[i].getAttribute("data-language") === currentLanguage);
+      }
+      setPageTitle(copy.title);
+
+      var leftResizerEl = gi("left-resizer");
+      var rightResizerEl = gi("right-resizer");
+      if (currentLanguage === "zh") {
+        if (leftResizerEl) {
+          leftResizerEl.title = "拖动调节左侧栏宽度（双击恢复默认）";
+          leftResizerEl.setAttribute("aria-label", "调节左侧栏宽度");
+        }
+        if (rightResizerEl) {
+          rightResizerEl.title = "拖动调节右侧栏宽度（双击恢复默认）";
+          rightResizerEl.setAttribute("aria-label", "调节右侧栏宽度");
+        }
+      } else {
+        if (leftResizerEl) {
+          leftResizerEl.title = "Drag to resize left panel (double-click to reset)";
+          leftResizerEl.setAttribute("aria-label", "Resize left panel");
+        }
+        if (rightResizerEl) {
+          rightResizerEl.title = "Drag to resize right panel (double-click to reset)";
+          rightResizerEl.setAttribute("aria-label", "Resize right panel");
+        }
+      }
+    }
+
+    fileInput.addEventListener("change", function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var importName = file.name || "edited.html";
+
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        applyImportedHtml(evt.target.result, importName);
+      };
+      reader.readAsText(file, "UTF-8");
+    });
+
+    iframe.addEventListener("load", function() {
+      // 保持之前的状态，不让 reload 强制将交互状态重置回编辑状态
+      var previousMode = currentMode; 
+
+      selEl = null;
+      hovEl = null;
+      selectedEls = [];
+      resizing = false;
+      didResize = false;
+      resizeHandleEl = null;
+      editorHandlersBound = false;
+      hideStageError();
+
+      try {
+        var doc = getDoc();
+        if (!doc) {
+          suppressNextLoadHistory = false;
+          historyApplying = false;
+          historyLock = false;
+          return;
+        }
+
+        injectEditorStyle(doc);
+        neutralizeFormsOnly(doc);
+        neutralizeEmptyLinks(doc); // enabled：链接重加载拦截
+        bindEditorEvents(doc);
+        clearSyncStack(true);
+
+        if (pendingViewState) {
+          var viewState = pendingViewState;
+          var replaySeq = pendingViewReplaySeq;
+          applyViewState(doc, viewState);
+          replayViewStateLater(viewState, replaySeq);
+          pendingViewState = null;
+        }
+
+        if (!historyLock && !suppressNextLoadHistory) saveHistory("load");
+
+        // 核心修复点：使用之前的模式状态，避免强制回退
+        setMode(previousMode); 
+        setPageTitle(pageTitleText);
+        updateSelectionCount();
+        refreshTextEditor();
+        refreshImageEditor();
+
+        setTimeout(function() {
+          updateCanvasHeightByContent();
+          fitReportToViewport();
+          centerReportStageHorizontallyLater();
+        }, 80);
+
+        suppressNextLoadHistory = false;
+        historyApplying = false;
+        historyLock = false;
+      } catch (err) {
+        pendingViewState = null;
+        suppressNextLoadHistory = false;
+        historyApplying = false;
+        historyLock = false;
+        console.log(err);
+      }
+    });
+
+    gi("btn-mode-edit").addEventListener("click", function(){ setMode("edit"); });
+    gi("btn-mode-live").addEventListener("click", function(){ setMode("live"); });
+    gi("language-toggle").addEventListener("click", function() {
+      updateEditorLanguage(currentLanguage === "zh" ? "en" : "zh");
+    });
+    gi("header-mode-text").addEventListener("click", function() {
+      setMode(currentMode === "edit" ? "live" : "edit");
+    });
+    gi("btn-import-code").addEventListener("click", openCodeImportModal);
+    gi("btn-code-import-cancel").addEventListener("click", closeCodeImportModal);
+    gi("btn-code-import-apply").addEventListener("click", importHtmlCodeFromText);
+    gi("code-import-modal").addEventListener("click", function(e) {
+      if (e.target === this) closeCodeImportModal();
+    });
+    gi("code-import-text").addEventListener("keydown", function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        importHtmlCodeFromText();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeCodeImportModal();
+      }
+    });
+    document.addEventListener("keydown", function(e) {
+      if (e.key !== "Escape") return;
+      var modal = gi("help-modal");
+      if (!modal || modal.style.display !== "flex") return;
+      e.preventDefault();
+      closeHeaderHelp();
+    });
+    gi("btn-header-export").addEventListener("click", exportEditedHtml);
+    gi("btn-toggle-style-panel").addEventListener("click", function() {
+      setStylePanelVisible(!stylePanelVisible);
+      centerReportStageHorizontallyLater();
+    });
+    gi("btn-header-help").addEventListener("click", showHeaderHelp);
+    gi("btn-help-close").addEventListener("click", closeHeaderHelp);
+    gi("help-modal").addEventListener("click", function(e) {
+      if (e.target === this) closeHeaderHelp();
+    });
+
+    gi("btn-clear-selection").addEventListener("click", function(){
+      clearSelection();
+      gi("top-bar").textContent = "Selection cleared.";
+    });
+
+    gi("btn-group-move-toggle").addEventListener("click", function() {
+      groupMoveEnabled = !groupMoveEnabled;
+      this.textContent = "Group Move: " + (groupMoveEnabled ? "On" : "Off");
+      this.classList.toggle("active", groupMoveEnabled);
+      gi("top-bar").textContent = "Group move is now " + (groupMoveEnabled ? "enabled" : "disabled") + "。";
+    });
+
+    gi("btn-align-left").addEventListener("click", function(){ alignSelection("left"); });
+    gi("btn-align-hcenter").addEventListener("click", function(){ alignSelection("hcenter"); });
+    gi("btn-align-right").addEventListener("click", function(){ alignSelection("right"); });
+    gi("btn-align-top").addEventListener("click", function(){ alignSelection("top"); });
+    gi("btn-align-vcenter").addEventListener("click", function(){ alignSelection("vcenter"); });
+    gi("btn-align-bottom").addEventListener("click", function(){ alignSelection("bottom"); });
+
+    gi("btn-undo").addEventListener("click", undo);
+    gi("btn-redo").addEventListener("click", redo);
+
+    function applyTextFromPanel() {
+      if (!selEl) {
+        gi("top-bar").textContent = "Please select an element first.";
+        return false;
+      }
+      if (!isTextLikeElement(selEl)) {
+        gi("top-bar").textContent = "Current element is not suitable for direct text edits.";
+        return false;
+      }
+      saveHistory("applyText");
+      applyEditableText(selEl, gi("sText").value);
+      refreshTextEditor();
+      refreshResizeHandle();
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+      gi("top-bar").textContent = "Text content applied.";
+      return true;
+    }
+
+    gi("btn-apply-text").addEventListener("click", function() {
+      applyTextFromPanel();
+    });
+
+    gi("sText").addEventListener("keydown", function(e) {
+      if (e.key !== "Enter") return;
+      // Enter applies text; Shift+Enter keeps a newline in the textarea.
+      if (e.shiftKey) return;
+      e.preventDefault();
+      applyTextFromPanel();
+    });
+
+    gi("btn-apply-img").addEventListener("click", function() {
+      applyImageSrc(gi("sImgSrc").value);
+    });
+
+    gi("btn-pick-img").addEventListener("click", function() {
+      if (!selEl || !selEl.tagName || selEl.tagName.toLowerCase() !== "img") {
+        gi("top-bar").textContent = "Please select an img element first.";
+        return;
+      }
+      imgPicker.value = "";
+      imgPicker.click();
+    });
+
+    imgPicker.addEventListener("change", function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        applyImageSrc(evt.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    gi("btn-select-parent").addEventListener("click", selectParentNode);
+    gi("btn-duplicate-node").addEventListener("click", duplicateNode);
+    gi("btn-delete-node").addEventListener("click", deleteNode);
+
+    gi("btn-sync-add").addEventListener("click", addCurrentToSyncStack);
+    gi("btn-sync-remove").addEventListener("click", removeCurrentFromSyncStack);
+    gi("btn-sync-clear").addEventListener("click", function() { clearSyncStack(false); });
+
+    gi("sTx").addEventListener("change", function() {
+      if (!selEl || noFill) return;
+      saveHistory("setTx");
+      var oldTx = getN(selEl, "data-tx");
+      var newTx = parseFloat(this.value) || 0;
+      selEl.setAttribute("data-tx", newTx);
+      applyTf(selEl);
+      applySyncMoveFromSource(selEl, newTx - oldTx, 0);
+      refreshResizeHandle();
+    });
+
+    gi("sTy").addEventListener("change", function() {
+      if (!selEl || noFill) return;
+      saveHistory("setTy");
+      var oldTy = getN(selEl, "data-ty");
+      var newTy = parseFloat(this.value) || 0;
+      selEl.setAttribute("data-ty", newTy);
+      applyTf(selEl);
+      applySyncMoveFromSource(selEl, 0, newTy - oldTy);
+      refreshResizeHandle();
+    });
+
+    gi("sPosRst").addEventListener("click", function() {
+      if (!selEl) return;
+      saveHistory("resetPos");
+      var oldTx = getN(selEl, "data-tx");
+      var oldTy = getN(selEl, "data-ty");
+      selEl.setAttribute("data-tx", 0);
+      selEl.setAttribute("data-ty", 0);
+      applyTf(selEl);
+      applySyncMoveFromSource(selEl, -oldTx, -oldTy);
+      gi("sTx").value = 0;
+      gi("sTy").value = 0;
+      refreshResizeHandle();
+    });
+
+    gi("sW").addEventListener("change", function() {
+      if (!selEl || noFill) return;
+      saveHistory("setWidth");
+      var v = parseFloat(this.value) || 0;
+      var h = parseFloat(gi("sH").value) || 0;
+      applyElementSize(selEl, v, h);
+      refreshResizeHandle();
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+    });
+
+    gi("sH").addEventListener("change", function() {
+      if (!selEl || noFill) return;
+      saveHistory("setHeight");
+      var v = parseFloat(this.value) || 0;
+      var w = parseFloat(gi("sW").value) || 0;
+      applyElementSize(selEl, w, v);
+      refreshResizeHandle();
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+    });
+
+    gi("sSizeRst").addEventListener("click", function() {
+      if (!selEl) return;
+      saveHistory("resetSize");
+      selEl.style.width = "";
+      selEl.style.height = "";
+      if (selEl.tagName && selEl.tagName.toLowerCase() === "img") {
+        selEl.style.removeProperty("max-width");
+        selEl.style.removeProperty("max-height");
+      }
+      fillPanel();
+      refreshResizeHandle();
+      updateCanvasHeightByContent();
+      if (zoomMode === "fit") fitReportToViewport();
+      gi("top-bar").textContent = "Auto size restored.";
+    });
+
+    gi("sFont").addEventListener("change", function(){ setStyle("fontFamily", this.value); });
+
+    gi("sFsr").addEventListener("input", function() {
+      gi("sFsn").value = this.value;
+      setStyle("fontSize", this.value + "px");
+    });
+
+    gi("sFsn").addEventListener("input", function() {
+      gi("sFsr").value = this.value;
+      setStyle("fontSize", this.value + "px");
+    });
+
+    gi("sColor").addEventListener("input", function() {
+      gi("sColorV").textContent = this.value;
+      setStyle("color", this.value);
+    });
+
+    gi("sBold").addEventListener("click", function() {
+      if (!selEl) return;
+      saveHistory("bold");
+      var on = this.className.indexOf("on") > -1;
+      this.className = on ? "sp-btn" : "sp-btn on";
+      selEl.style.fontWeight = on ? "400" : "700";
+    });
+
+    gi("sItalic").addEventListener("click", function() {
+      if (!selEl) return;
+      saveHistory("italic");
+      var on = this.className.indexOf("on") > -1;
+      this.className = on ? "sp-btn" : "sp-btn on";
+      selEl.style.fontStyle = on ? "normal" : "italic";
+    });
+
+    gi("sUnder").addEventListener("click", function() {
+      if (!selEl) return;
+      saveHistory("underline");
+      var on = this.className.indexOf("on") > -1;
+      this.className = on ? "sp-btn" : "sp-btn on";
+      var hasS = gi("sStrike").className.indexOf("on") > -1;
+      var v = (on ? "" : "underline ") + (hasS ? "line-through" : "");
+      selEl.style.textDecoration = v || "none";
+    });
+
+    gi("sStrike").addEventListener("click", function() {
+      if (!selEl) return;
+      saveHistory("strike");
+      var on = this.className.indexOf("on") > -1;
+      this.className = on ? "sp-btn" : "sp-btn on";
+      var hasU = gi("sUnder").className.indexOf("on") > -1;
+      var v = (hasU ? "underline " : "") + (on ? "" : "line-through");
+      selEl.style.textDecoration = v || "none";
+    });
+
+    gi("sLh").addEventListener("input", function() {
+      gi("sLhV").textContent = this.value;
+      setStyle("lineHeight", this.value);
+    });
+
+    gi("sBg").addEventListener("input", function() {
+      gi("sBgV").textContent = this.value;
+      setStyle("backgroundColor", this.value);
+    });
+
+    gi("sOp").addEventListener("input", function() {
+      gi("sOpV").textContent = Math.round(this.value * 100) + "%";
+      setStyle("opacity", this.value);
+    });
+
+    gi("sBr").addEventListener("input", function() {
+      gi("sBrV").textContent = this.value + "px";
+      setStyle("borderRadius", this.value + "px");
+    });
+
+    gi("sBw").addEventListener("input", function() {
+      gi("sBwV").textContent = this.value + "px";
+      setStyle("border", this.value + "px " + gi("sBs").value + " " + gi("sBc").value);
+    });
+
+    gi("sBc").addEventListener("input", function() {
+      setStyle("border", gi("sBw").value + "px " + gi("sBs").value + " " + this.value);
+    });
+
+    gi("sBs").addEventListener("change", function() {
+      setStyle("border", gi("sBw").value + "px " + this.value + " " + gi("sBc").value);
+    });
+
+    gi("sPt").addEventListener("input", function(){ setStyle("paddingTop", this.value + "px"); });
+    gi("sPb").addEventListener("input", function(){ setStyle("paddingBottom", this.value + "px"); });
+    gi("sPl").addEventListener("input", function(){ setStyle("paddingLeft", this.value + "px"); });
+    gi("sPr").addEventListener("input", function(){ setStyle("paddingRight", this.value + "px"); });
+    gi("sMt").addEventListener("input", function(){ setStyle("marginTop", this.value + "px"); });
+    gi("sMb").addEventListener("input", function(){ setStyle("marginBottom", this.value + "px"); });
+
+    gi("sRot").addEventListener("input", function() {
+      gi("sRotV").textContent = this.value;
+      if (!selEl) return;
+      saveHistory("rotate");
+      selEl.setAttribute("data-rot", parseFloat(this.value) || 0);
+      applyTf(selEl);
+      refreshResizeHandle();
+    });
+
+    gi("sSc").addEventListener("input", function() {
+      gi("sScV").textContent = parseFloat(this.value).toFixed(2);
+      if (!selEl) return;
+      saveHistory("scale");
+      selEl.setAttribute("data-sc", parseFloat(this.value) || 1);
+      applyTf(selEl);
+      refreshResizeHandle();
+    });
+
+    // 快捷键监听
+    window.addEventListener("keydown", onEditorKeyDown, true);
+
+    gi("btn-reset").addEventListener("click", function() {
+      if (!originalHtmlText) return;
+      if (!confirm("Reset to initially imported content?")) return;
+
+      selEl = null;
+      hovEl = null;
+      selectedEls = [];
+      dragging = false;
+      didDrag = false;
+      resizing = false;
+      didResize = false;
+      resizeHandleEl = null;
+      editorHandlersBound = false;
+      lastSnapshot = "";
+      redoSnapshot = "";
+      clearSyncStack(true);
+      canvasWidth = defaultCanvasWidth;
+      canvasHeight = defaultCanvasHeight;
+      canvasSizeLocked = false;
+      setCanvasPresetActive("canvas-default");
+      previewScale = 1;
+      zoomMode = "fit";
+      iframe.srcdoc = originalHtmlText;
+
+      updateTagDisplay(null);
+      updateSelectionCount();
+      gi("spTip").style.display = "";
+      gi("spMain").style.display = "none";
+      gi("top-bar").textContent = "Reset: " + currentFileName;
+    });
+
+    gi("zoom-25").addEventListener("click", function() {
+      setFixedZoom(0.25, "zoom-25", "25%");
+    });
+
+    gi("zoom-50").addEventListener("click", function() {
+      setFixedZoom(0.5, "zoom-50", "50%");
+    });
+
+    gi("zoom-75").addEventListener("click", function() {
+      setFixedZoom(0.75, "zoom-75", "75%");
+    });
+
+    gi("zoom-100").addEventListener("click", function() {
+      setFixedZoom(1, "zoom-100", "100%");
+    });
+
+    gi("zoom-fit").addEventListener("click", function() {
+      fitReportToViewport();
+      centerReportStageHorizontallyLater();
+    });
+
+    gi("canvas-default").addEventListener("click", function() {
+      setCanvasToDefault();
+    });
+
+    gi("canvas-16-9").addEventListener("click", function() {
+      setCanvasRatio(16, 9, "16:9");
+    });
+
+    gi("canvas-4-3").addEventListener("click", function() {
+      setCanvasRatio(4, 3, "4:3");
+    });
+
+    gi("zoom-status").addEventListener("dblclick", function() {
+      promptCanvasSizeEdit();
+    });
+
+    gi("report-stage-wrap").addEventListener("wheel", zoomWithModifierWheel, { passive: false });
+    var reportToolbar = gi("report-toolbar");
+    if (reportToolbar) {
+      reportToolbar.addEventListener("wheel", zoomWithModifierWheel, { passive: false });
+    }
+
+    var leftResizer = gi("left-resizer");
+    var rightResizer = gi("right-resizer");
+    bindPanelResizer(leftResizer, "left");
+    bindPanelResizer(rightResizer, "right");
+
+    var panelResizeOverlay = gi("panel-resize-overlay");
+    if (panelResizeOverlay) {
+      panelResizeOverlay.addEventListener("pointermove", onPanelResizeMove);
+      panelResizeOverlay.addEventListener("pointerup", endPanelResize);
+      panelResizeOverlay.addEventListener("pointercancel", endPanelResize);
+    }
+    document.addEventListener("pointermove", onPanelResizeMove, true);
+    document.addEventListener("pointerup", endPanelResize, true);
+    document.addEventListener("pointercancel", endPanelResize, true);
+    window.addEventListener("blur", function() {
+      if (panelResizeState) endPanelResize();
+    });
+
+    loadStoredPanelWidths();
+    applyPanelWidths();
+    syncPanelWidthsToViewport();
+    setStylePanelVisible(currentMode === "edit" && hasImportedFile);
+    primeReportStageCenteredScroll();
+    centerReportStageHorizontallyLater();
+
+    updateEditorLanguage("en");
+
+    renderSyncStack();
+
+    window.addEventListener("resize", function() {
+      syncPanelWidthsToViewport();
+      if (zoomMode === "fit") {
+        fitReportToViewport();
+      }
+      centerReportStageHorizontallyLater();
+    });
+  </script>
+</body>
+</html>
